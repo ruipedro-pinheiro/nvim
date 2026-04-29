@@ -75,7 +75,7 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | Key | Action |
 |-----|--------|
 | `jk` / `jj` | Escape (insert mode) |
-| `<C-s>` | Save (+ format si fichier C) |
+| `<C-s>` | Save (LazyVim default) |
 | `<Space>q` | Quit |
 | `<Space>Q` | Force quit all |
 
@@ -103,19 +103,58 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | Key | Action |
 |-----|--------|
 | `F1` | Inserer le header 42 |
-| `F2` | Inserer la bannière Pedro |
-| `<Space>cf` | Format manuel |
-| `F5` | Compile fichier C (`cc -Wall -Werror -Wextra`) |
+| `F2` | Inserer la banniere Pedro (auto-update au save) |
+| `<Space>cf` | Format manuel (clang-format pour C) |
+| `F5` | Compile fichier C (`cc -Wall -Werror -Wextra`, async) |
 | `F6` | Run le binaire compile |
-| `F7` | `make` |
-| `F8` | `make re` |
+| `F7` | `make` (async) |
+| `F8` | `make re` (async) |
 
 ### Terminal
 
 | Key | Action |
 |-----|--------|
-| `<Space>tt` | Ouvrir terminal |
+| `<Space>ft` | Terminal flottant (root du projet) |
+| `<Space>fT` | Terminal flottant (cwd) |
+| `<Space>tb` | Terminal split bas (root) |
+| `<Space>tB` | Terminal split bas (cwd) |
+| `<C-/>` | Terminal flottant (root) — raccourci |
 | `<Esc><Esc>` | Quitter mode terminal |
+
+---
+
+## MATCH (search & replace flottant — `lua/plugins/match.lua`)
+
+### Ouvrir
+
+| Key | Action |
+|-----|--------|
+| `<Space>sm` | Match avec mot sous curseur |
+| `<Space>sM` | Match avec saisie libre |
+| `:Match foo` | Ouvrir avec `foo` pre-rempli |
+| `:MatchLine` | Ouvrir avec la ligne courante |
+
+### Dans l'UI (en haut a droite)
+
+| Key | Action |
+|-----|--------|
+| `<Tab>` | Bascule Search ↔ Replace |
+| `<Esc>` / `<C-q>` | Fermer |
+| `<CR>` (search) | Passer au champ Replace |
+| `<CR>` (replace) | Remplacer TOUT |
+| `<Up>` (search) | Match precedent |
+| `<Down>` (search) | Match suivant |
+| `<Up>` (replace) | Remplacer le precedent |
+| `<Down>` (replace) | Remplacer le suivant |
+| `<C-u>` / `<C-r>` (replace) | Undo / Redo |
+
+### Toggles VSCode-like
+
+| Key | Action |
+|-----|--------|
+| `<A-c>` | Case-sensitive (Aa) |
+| `<A-w>` | Whole-word (ab) |
+| `<A-r>` | Regex (.*) |
 
 ---
 
@@ -123,25 +162,24 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 
 | Key | Action |
 |-----|--------|
-| `<Space>a` | Ajouter fichier a la liste |
-| `<C-e>` | Menu Harpoon (voir/reordonner) |
-| `<C-1>` | Switch vers fichier 1 |
-| `<C-2>` | Switch vers fichier 2 |
-| `<C-3>` | Switch vers fichier 3 |
-| `<C-4>` | Switch vers fichier 4 |
+| `<Space>H` | Ajouter fichier a la liste |
+| `<Space>h` | Menu Harpoon (voir/reordonner) |
+| `<Space>1..9` | Switch vers fichier 1..9 |
 
-**Workflow** : ouvre tes 3-4 fichiers principaux, `<Space>a` chacun, puis `<C-1/2/3/4>` pour switcher instantanement.
+**Workflow** : ouvre tes 3-4 fichiers principaux, `<Space>H` chacun, puis `<Space>1/2/3` pour switcher instantanement.
 
 ---
 
 ## LAZYVIM DEFAULTS (les plus utiles)
+
+> Picker = Snacks (pas Telescope). Meme keymaps mais UI plus rapide.
 
 ### Fichiers & Navigation
 
 | Key | Action |
 |-----|--------|
 | `<Space>e` | Explorateur (neo-tree) |
-| `<Space>ff` | Find files (telescope) |
+| `<Space>ff` | Find files |
 | `<Space>fg` | Live grep (chercher du texte) |
 | `<Space>fb` | Buffers ouverts |
 | `<Space>fr` | Fichiers recents |
@@ -157,6 +195,7 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | `<C-Up/Down/Left/Right>` | Resize fenetre |
 | `<Space>-` | Split horizontal |
 | `<Space>\|` | Split vertical |
+| `<Space>wd` | Fermer la fenetre |
 
 ### LSP (quand un serveur est attache)
 
@@ -174,7 +213,7 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | `<Space>cd` | Line diagnostic |
 | `]d` / `[d` | Diagnostic suivant/precedent |
 
-### Git (LazyVim + lazygit)
+### Git (LazyVim + lazygit + gitsigns)
 
 | Key | Action |
 |-----|--------|
@@ -182,7 +221,22 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | `<Space>gf` | Git files |
 | `<Space>gc` | Git commits |
 | `<Space>gs` | Git status |
-| `]h` / `[h` | Hunk suivant/precedent (gitsigns) |
+
+### Gitsigns (hunks dans le fichier courant)
+
+| Key | Action |
+|-----|--------|
+| `]c` / `[c` | Hunk suivant / precedent |
+| `<Space>hs` | Stage hunk |
+| `<Space>hr` | Reset hunk |
+| `<Space>hS` | Stage tout le buffer |
+| `<Space>hR` | Reset tout le buffer |
+| `<Space>hu` | Undo stage hunk |
+| `<Space>hp` | Preview hunk |
+| `<Space>hb` | Blame ligne (full) |
+| `<Space>hd` | Diff this |
+| `<Space>hD` | Diff this avec parent |
+| `ih` (text obj) | Selectionne le hunk (`dih`, `vih`, etc.) |
 
 ### Toggles
 
@@ -204,6 +258,7 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 |-----|--------|
 | `s` | Flash jump — tape 2 chars, jump direct |
 | `S` | Flash treesitter — select par node |
+| `r` (operator) | Remote flash (apres `d`/`y`/`c`) |
 
 ### Surround
 
@@ -214,12 +269,25 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | `ysiw{char}` | Add surrounding | `ysiw"` : `hello` → `"hello"` |
 | `ysa{obj}{char}` | Add around obj | `ysa)"` : `(foo)` → `"(foo)"` |
 
-### Session
+### Session (persistence)
 
 | Key | Action |
 |-----|--------|
 | `<Space>qs` | Restore session (dossier courant) |
 | `<Space>ql` | Restore derniere session |
+| `<Space>qd` | Don't save current session |
+
+### Noice (cmdline et notifications)
+
+La cmdline `:` apparait flottante au centre. Search `/`/`?` aussi.
+Pas de keymap specifique — c'est juste l'UI.
+
+### Lualine — compteur de lignes de fonction (fichiers C/C++ uniquement)
+
+Affiche `Fn:N/25` dans la statusline quand tu es dans une fonction :
+- vert si <20 lignes
+- jaune si 20-24
+- rouge si ≥25 (norme 42 violee)
 
 ---
 
@@ -239,6 +307,6 @@ Modes disponibles :
 
 1. **Semaine 1** : `hjkl`, `w/b/e`, `dd`, `cc`, `ciw`, `ci"`, `di)`, `.`
 2. **Semaine 2** : `f/t` + `;`, text objects (`iw`, `i"`, `i)`, `i}`), `<C-d>/<C-u>`
-3. **Semaine 3** : Flash (`s`), Harpoon (`<Space>a`, `<C-1..4>`), Telescope (`<Space>ff/fg`)
+3. **Semaine 3** : Flash (`s`), Harpoon (`<Space>H`, `<Space>1..9`), Snacks picker (`<Space>ff/fg`)
 4. **Semaine 4** : Surround (`cs/ds/ys`), LSP (`gd`, `K`, `<Space>ca/cr`), macros (`q`)
 5. **Ongoing** : `:VimBeGood` chaque jour 10 min jusqu'a ce que ce soit instinctif

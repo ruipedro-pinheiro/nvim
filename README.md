@@ -1,30 +1,37 @@
 # Neovim Config
 
-Config Neovim basée sur [LazyVim](https://www.lazyvim.org/) pour C/C++, web et usage quotidien, avec headers 42 + bannière perso.
+Config Neovim basée sur [LazyVim](https://www.lazyvim.org/) pour C/C++, web et usage quotidien, avec headers 42 + bannière perso et search/replace flottant.
 
 ## ✨ Features
 
-- **Theme**: Catppuccin Mocha
-- **42 Header**: Header automatique avec `<F1>`
-- **Pedro Header**: Bannière perso avec `<F2>`
-- **Font**: Monaspace Argon Nerd Font
+- **Theme** : Catppuccin Mocha
+- **42 Header** : Header automatique avec `<F1>`
+- **Pedro Header** : Bannière perso avec `<F2>` (auto-update au save)
+- **Match** : Search & Replace flottant style VSCode (`<Space>sm`)
+- **Compteur 42** : `Fn:N/25` dans la statusline pour les fonctions C/C++ (vert/jaune/rouge)
+- **Font** : Monaspace Argon Nerd Font
 
 ## 📦 Plugins Principaux
 
-- [LazyVim](https://github.com/LazyVim/LazyVim) - Distribution Neovim
-- [42-header.nvim](https://github.com/Diogo-ss/42-header.nvim) - Headers 42
-- [blink.cmp](https://github.com/saghen/blink.cmp) - Complétion LSP
-- [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim) - Explorateur latéral
-- [catppuccin](https://github.com/catppuccin/nvim) - Theme
+- [LazyVim](https://github.com/LazyVim/LazyVim) — Distribution Neovim
+- [42-header.nvim](https://github.com/Diogo-ss/42-header.nvim) — Headers 42
+- [blink.cmp](https://github.com/saghen/blink.cmp) — Complétion LSP (snippets désactivés)
+- [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim) — Explorateur latéral
+- [catppuccin](https://github.com/catppuccin/nvim) — Theme
+- [gitsigns](https://github.com/lewis6991/gitsigns.nvim) — Hunks git in-buffer
+- [nvim-surround](https://github.com/kylechui/nvim-surround) — `cs/ds/ys`
+- [vim-be-good](https://github.com/ThePrimeagen/vim-be-good) — Entraînement vim
+- [wakatime](https://github.com/wakatime/vim-wakatime) — Tracking temps de code
 
 ## 🚀 Installation
 
 ### Prérequis
 
 ```bash
-# Neovim >= 0.9.0
-brew install neovim
-
+# Neovim >= 0.10
+brew install neovim       # macOS
+sudo dnf install neovim   # Fedora
+sudo pacman -S neovim     # Arch
 ```
 
 ### Installation de la config
@@ -36,77 +43,108 @@ mv ~/.config/nvim ~/.config/nvim.backup
 # Clone la config
 git clone https://github.com/TON_USERNAME/nvim-config.git ~/.config/nvim
 
-# Lance Neovim (les plugins s'installent automatiquement)
+# Lance Neovim (les plugins s'installent automatiquement via Lazy)
 nvim
 ```
 
-### Setup spécifique Mac 42
+### Setup spécifique 42
 
-Sur les Mac de l'école, tu devras peut-être :
-
-1. Installer Neovim via Homebrew (si pas déjà fait)
-2. Vérifier que Neovim nightly est bien lancé si tu veux rester sur la dernière base
-3. Ajuster `user` et `mail` pour le header 42
-4. L'autoformat est désactivé par défaut (format manuel avec `<leader>cf`)
+1. Vérifier que Neovim ≥ 0.10 est installé
+2. Ajuster `user` et `mail` du header 42 (voir ci-dessous)
+3. L'autoformat est désactivé par défaut (format manuel avec `<Space>cf`)
 
 ## ⚙️ Configuration Header 42
 
-Dans `lua/plugins/42-tools.lua`, modifie ton user et mail :
+Dans `lua/plugins/core.lua`, modifie ton login et mail :
 
 ```lua
-opts = {
-  user = "TON_LOGIN",
-  mail = "TON_LOGIN@student.42lausanne.ch",
+{
+  "Diogo-ss/42-header.nvim",
+  opts = {
+    user = "TON_LOGIN",
+    mail = "TON_LOGIN@student.42lausanne.ch",
+  },
 },
 ```
 
 ## ⌨️ Keymaps Essentiels
 
+> Liste exhaustive : voir `cheatsheet.md`. Leader = `<Space>`.
+
 ### Général
-- `<leader>` = `Space`
-- `<F1>` = Insérer header 42
-- `<F2>` = Insérer header Pedro
-- `<leader>cf` = Format manuel
+- `<F1>` — Insérer header 42
+- `<F2>` — Insérer header Pedro
+- `<F5>` — Compile C (`cc -Wall -Werror -Wextra`, async)
+- `<F7>` / `<F8>` — `make` / `make re` (async)
+- `<Space>cf` — Format manuel
+- `jk` ou `jj` — Escape (insert mode)
 
 ### Navigation
-- `<leader>e` = Explorer de fichiers
-- `<leader>ff` = Find files
-- `<leader>fg` = Live grep
+- `<Space>e` — Explorer de fichiers (neo-tree)
+- `<Space>ff` — Find files
+- `<Space>fg` — Live grep
+- `<Space>fr` — Recent files
+
+### Search & Replace
+- `<Space>sm` — Match (mot sous curseur)
+- `<Space>sM` — Match (saisie libre)
 
 ### LSP
-- `gd` = Go to definition
-- `gr` = Go to references
-- `K` = Hover documentation
+- `gd` — Go to definition
+- `gr` — References
+- `K` — Hover doc
+- `<Space>ca` / `<Space>cr` — Code action / Rename
+
+### Git
+- `<Space>gg` — Lazygit
+- `]c` / `[c` — Hunk suivant / précédent
+- `<Space>hs` — Stage hunk
 
 ## 📁 Structure
 
 ```
 ~/.config/nvim/
-├── init.lua              # Point d'entrée
+├── init.lua                     # Point d'entrée
+├── lazyvim.json                 # Extras LazyVim activés
+├── cheatsheet.md                # Cheatsheet keymaps complet
 ├── lua/
 │   ├── config/
-│   │   ├── autocmds.lua  # Autocommands
-│   │   ├── keymaps.lua   # Keymaps custom
-│   │   ├── lazy.lua      # Config lazy.nvim
-│   │   └── options.lua   # Options Vim
+│   │   ├── autocmds.lua         # C indent, trim whitespace, diag float
+│   │   ├── keymaps.lua          # Keymaps custom (clipboard, F-keys, terminal)
+│   │   ├── lazy.lua             # Bootstrap lazy.nvim
+│   │   └── options.lua          # Options Vim (tabs 4, scrolloff 8, etc.)
 │   └── plugins/
-│       ├── 42-tools.lua  # Theme + header 42
-│       ├── completion.lua
-│       ├── headers.lua   # Bannière Pedro
-│       ├── lsp.lua
-│       └── ui.lua
+│       ├── core.lua             # Catppuccin + 42 header + treesitter + lualine
+│       ├── completion.lua       # blink.cmp (snippets off)
+│       ├── formatting.lua       # conform.nvim (clang-format, prettier)
+│       ├── git.lua              # gitsigns + hunk keymaps
+│       ├── headers.lua          # Bannière Pedro (auto-update au save)
+│       ├── lsp.lua              # clangd (norm 42), lua_ls
+│       ├── match.lua            # Search & Replace flottant
+│       ├── ui-enhancements.lua  # Wakatime
+│       └── vscode-like.lua      # Surround, vim-be-good, noice
 └── .gitignore
 ```
 
 ## 🎨 Theme
 
-Le theme Catppuccin Mocha fonctionne partout :
-- **Arch/HyDE** : Match avec la config Hyprland/Kitty
-- **Mac 42** : Fonctionne out-of-the-box avec GNOME
+Le theme Catppuccin Mocha :
+- Bordures de toutes les fenêtres flottantes en mauve (`mauve`)
+- Fond `mantle` pour les floats
+- Transparent désactivé par défaut
 
 ## 📝 Notes
 
-- Le format automatique à la sauvegarde est **désactivé** par défaut
-- Les line numbers relatives sont désactivées (preference perso)
-- Config testée sur Arch Linux (HyDE) et macOS (GNOME)
-- La font Monaspace est optionnelle (fallback sur la font par défaut si absente)
+- Format automatique à la sauvegarde **désactivé** (`vim.g.autoformat = false`)
+- AI completion **désactivée** (`vim.g.ai_cmp = false`) — éthique 42
+- Tabs en C/C++ : tabs réels (pas d'expandtab), 4 colonnes, `colorcolumn 80`
+- Le compteur de lignes de fonction (`Fn:N/25`) ne s'affiche que dans les fichiers C/C++
+- LSP `clangd` configuré sans snippets ni placeholders d'arguments (cohérent avec `<C-Space>` simple)
+- Config testée sur Fedora et macOS
+
+## 🔧 Customisation rapide
+
+- Ajouter un keymap : `lua/config/keymaps.lua`
+- Ajouter une option : `lua/config/options.lua`
+- Activer un extra LazyVim : ajouter dans `lazyvim.json` puis `:Lazy sync`
+- Ajouter un plugin : nouveau fichier dans `lua/plugins/`
