@@ -12,22 +12,30 @@ vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
 
 -- LazyVim behavior
-vim.g.autoformat = false
+-- Autoformat-on-save is ON globally (LazyVim default), then disabled per-buffer
+-- for C/C++/H in autocmds.lua — manual format only there (norme 42 + anti-roulettes).
+--
+-- AI completion désactivée : pas de Copilot/Codeium dans le menu de blink.cmp.
+-- Cohérent avec la philosophie anti-roulettes + éthique 42 sur le code gradué.
 vim.g.ai_cmp = false
-vim.g.lazyvim_explorer = "neo-tree"
 
 -- Search
 vim.opt.hlsearch = true
 
+-- Tabline only shown when 2+ tabs (avoid empty top row with single buffer)
+vim.opt.showtabline = 1
+
+-- Signcolumn auto: column hidden when no signs to show (saves left space)
+vim.opt.signcolumn = "auto"
+
 -- UI
 vim.opt.scrolloff = 8
-vim.opt.sidescrolloff = 8
 vim.opt.pumheight = 12
 
--- Files
-vim.opt.swapfile = false
-vim.opt.backup = false
-vim.opt.undofile = true
+-- Files (filets de sécurité contre crash + persistence undo)
+-- vim.opt.swapfile par défaut = true (filet contre crash). On garde.
+vim.opt.backup = false       -- pas besoin de backup files (.bak)
+vim.opt.undofile = true      -- undo persistent entre sessions
 
 -- Disable auto-save — Pedro saves explicitly with <C-s>
 vim.opt.autowrite = false
@@ -35,9 +43,6 @@ vim.opt.autowriteall = false
 
 -- Splits open in the natural direction
 vim.opt.splitkeep = "screen"
-
--- GUI font (Monaspace Argon Nerd Font)
-vim.opt.guifont = "MonaspiceAr Nerd Font Mono:h12"
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
 -- │                    Float window borders                                │
@@ -53,16 +58,11 @@ else
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │         LSP float windows: non-blocking (never steal focus)           │
--- │  Fixes hover/signature windows that capture input on second K press   │
+-- │  Diagnostic float: non-focusable (cursor never gets stolen).          │
+-- │  Hover/signature non-focusable behavior comes from noice.nvim's       │
+-- │  vim.lsp.util.open_floating_preview override (see vscode-like.lua).   │
+-- │  Scroll inside noice hover via <C-f>/<C-b> (see keymaps.lua).         │
 -- └────────────────────────────────────────────────────────────────────────┘
-local open_floating_preview = vim.lsp.util.open_floating_preview
----@diagnostic disable-next-line: duplicate-set-field
-vim.lsp.util.open_floating_preview = function(contents, syntax, opts, ...)
-  opts = opts or {}
-  opts.focusable = false
-  if vim.fn.has("nvim-0.11") == 0 then
-    opts.border = opts.border or "rounded"
-  end
-  return open_floating_preview(contents, syntax, opts, ...)
-end
+vim.diagnostic.config({
+  float = { focusable = false, source = "if_many" },
+})

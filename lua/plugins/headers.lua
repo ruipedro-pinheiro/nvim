@@ -28,7 +28,17 @@ return {
         }
       end
 
+      -- Filetypes où la bannière (bloc /* ... */) est valide.
+      local allowed_filetypes = { c = true, cpp = true, h = true }
+
       local function insert_header()
+        if not allowed_filetypes[vim.bo.filetype] then
+          vim.notify(
+            "Pedro header : pas de bannière pour ce filetype (C/C++/H seulement)",
+            vim.log.levels.WARN
+          )
+          return
+        end
         local time = vim.fn.strftime("%Y/%m/%d %H:%M:%S")
         vim.api.nvim_buf_set_lines(0, 0, 0, false, build_header(time))
         vim.opt_local.list = false
@@ -66,8 +76,11 @@ return {
 
       vim.keymap.set("n", "<F2>", insert_header, { desc = "Insert Pedro Header" })
 
+      -- Scope to filetypes where the Pedro banner makes sense (C/C++/headers).
+      -- Avoids running the regex check on every JSON/MD/lua/etc. save.
       vim.api.nvim_create_autocmd("BufWritePre", {
         group = vim.api.nvim_create_augroup("PedroHeader", { clear = true }),
+        pattern = { "*.c", "*.h", "*.cpp", "*.hpp" },
         callback = update_header,
       })
     end,

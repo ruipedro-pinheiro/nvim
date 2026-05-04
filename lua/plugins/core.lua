@@ -23,6 +23,8 @@ return {
       integrations = {
         blink_cmp = { enabled = true, style = "bordered" },
         cmp = true,
+        dap = true,
+        dap_ui = true,
         gitsigns = true,
         mason = true,
         neotree = true,
@@ -44,17 +46,49 @@ return {
         telescope = { enabled = true },
         which_key = true,
       },
-      -- Single source of truth for float colors (no more triple-declaration)
+      -- ┌──────────────────────────────────────────────────────────────┐
+      -- │  Single source of truth for float-style highlights.          │
+      -- │                                                              │
+      -- │  - Standard nvim floats (FloatBorder/FloatTitle/NormalFloat) │
+      -- │    set the canonical colors.                                 │
+      -- │  - Plugin-specific groups that don't inherit the canonical   │
+      -- │    ones (Blink, Snacks picker) are linked back to them.      │
+      -- │  - Tweaking FloatBorder later propagates everywhere via the  │
+      -- │    links — no duplicated color values to keep in sync.       │
+      -- └──────────────────────────────────────────────────────────────┘
       highlight_overrides = {
         mocha = function(colors)
-          return {
-            FloatBorder = { fg = colors.mauve, bg = colors.base },
-            NormalFloat = { bg = colors.mantle, fg = colors.text },
-            BlinkCmpMenuBorder = { fg = colors.mauve, bg = colors.base },
-            BlinkCmpDocBorder = { fg = colors.mauve, bg = colors.base },
-            BlinkCmpSignatureHelpBorder = { fg = colors.mauve, bg = colors.base },
+          -- NormalFloat bg = colors.mantle (one shade darker than editor base).
+          -- Gives clear visual contrast so floats stand out as elevated surfaces
+          -- (hover, signature help, completion menu, picker).
+          -- Border bg also = mantle so rounded corners share the float interior
+          -- bg → no mismatching square fill around the curves.
+          local float = {
+            bg     = { bg = colors.mantle, fg = colors.text },
+            border = { fg = colors.mauve, bg = colors.mantle },
+            title  = { fg = colors.mauve, bg = colors.mantle, bold = true },
+          }
+
+          local hl = {
+            -- Canonical float style
+            NormalFloat = float.bg,
+            FloatBorder = float.border,
+            FloatTitle  = float.title,
+
+            -- Blink completion uses its own border groups
+            BlinkCmpMenuBorder          = { link = "FloatBorder" },
+            BlinkCmpDocBorder           = { link = "FloatBorder" },
+            BlinkCmpSignatureHelpBorder = { link = "FloatBorder" },
+
+            -- Cursor line number kept on the mauve accent
             CursorLineNr = { fg = colors.mauve, bold = true },
           }
+
+          -- Note: SnacksPicker* groups are linked theme-agnostically
+          -- via a ColorScheme autocmd in autocmds.lua, so they follow
+          -- whichever theme is active (incl. picker live preview).
+
+          return hl
         end,
       },
     },
@@ -104,6 +138,7 @@ return {
         "c",
         "cpp",
         "css",
+        "dockerfile",
         "html",
         "javascript",
         "json",
@@ -111,10 +146,14 @@ return {
         "make",
         "markdown",
         "markdown_inline",
+        "query",
+        "regex",
+        "toml",
         "tsx",
         "typescript",
         "vim",
         "vimdoc",
+        "yaml",
       },
     },
   },
@@ -125,24 +164,26 @@ return {
   {
     "nvim-lualine/lualine.nvim",
     opts = function(_, opts)
-      local function get_function_lines()
-        local bufnr = vim.api.nvim_get_current_buf()
+      -- Cache du compteur de lignes par fonction.
+      -- Lualine appelle get_function_lines() à chaque redraw (CursorMoved,
+      -- ModeChanged, BufEnter, etc. = plusieurs fois par seconde). Treesitter
+      -- parse + tree walk c'est pas gratuit. On cache par (bufnr, ligne, col,
+      -- changedtick) et on retourne direct si rien n'a bougé.
+      local cache = {}
+
+      local function compute_function_lines(bufnr, row, col)
         local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
         if not ok or not parser then
           return ""
         end
-        local cursor = vim.api.nvim_win_get_cursor(0)
-        local row = cursor[1] - 1
-        local col = cursor[2]
         local tree = parser:parse()[1]
         if not tree then
           return ""
         end
-        local root = tree:root()
-        local node = root:named_descendant_for_range(row, col, row, col)
+        local node = tree:root():named_descendant_for_range(row, col, row, col)
         while node do
           if node:type() == "function_definition" then
-            local body = nil
+            local body
             for child in node:iter_children() do
               if child:type() == "compound_statement" then
                 body = child
@@ -150,13 +191,8 @@ return {
               end
             end
             if body then
-              local start_row = body:start()
-              local end_row = body:end_()
-              local line_count = end_row - start_row - 1
-              if line_count < 0 then
-                line_count = 0
-              end
-              local color = ""
+              local line_count = math.max(0, body:end_() - body:start() - 1)
+              local color
               if line_count >= 25 then
                 color = "%#DiagnosticError#"
               elseif line_count >= 20 then
@@ -170,6 +206,22 @@ return {
           node = node:parent()
         end
         return ""
+      end
+
+      local function get_function_lines()
+        local bufnr = vim.api.nvim_get_current_buf()
+        local cursor = vim.api.nvim_win_get_cursor(0)
+        local row, col = cursor[1] - 1, cursor[2]
+        local tick = vim.api.nvim_buf_get_changedtick(bufnr)
+
+        local entry = cache[bufnr]
+        if entry and entry.tick == tick and entry.row == row and entry.col == col then
+          return entry.result
+        end
+
+        local result = compute_function_lines(bufnr, row, col)
+        cache[bufnr] = { tick = tick, row = row, col = col, result = result }
+        return result
       end
 
       opts.sections = opts.sections or {}

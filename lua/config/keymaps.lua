@@ -11,8 +11,21 @@ local map = vim.keymap.set
 -- └────────────────────────────────────────────────────────────────────────┘
 
 -- Better escape
-map("i", "jk", "<Esc>", { desc = "Exit insert mode" })
 map("i", "jj", "<Esc>", { desc = "Exit insert mode" })
+
+-- Scroll inside noice hover/signature WITHOUT focusing it.
+-- Falls back to native <C-f>/<C-b> when no noice popup is active.
+map({ "n", "i", "s" }, "<C-f>", function()
+  if not require("noice.lsp").scroll(4) then
+    return "<C-f>"
+  end
+end, { silent = true, expr = true, desc = "Scroll hover down / page down" })
+
+map({ "n", "i", "s" }, "<C-b>", function()
+  if not require("noice.lsp").scroll(-4) then
+    return "<C-b>"
+  end
+end, { silent = true, expr = true, desc = "Scroll hover up / page up" })
 
 -- Force quit all
 map("n", "<leader>Q", "<cmd>qa!<cr>", { desc = "Quit all (force)" })
@@ -45,9 +58,9 @@ map("n", "N", "Nzzzv", { desc = "Previous search centered" })
 
 map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
-local function terminal_float(cwd)
+map({ "n", "t" }, "<C-/>", function()
   Snacks.terminal(nil, {
-    cwd = cwd,
+    cwd = LazyVim.root(),
     win = {
       position = "float",
       border = "rounded",
@@ -55,82 +68,7 @@ local function terminal_float(cwd)
       height = 0.82,
     },
   })
-end
-
-local function terminal_bottom(cwd)
-  Snacks.terminal(nil, {
-    cwd = cwd,
-    win = {
-      position = "bottom",
-      border = "top",
-      height = 0.32,
-    },
-  })
-end
-
-map("n", "<leader>ft", function()
-  terminal_float(LazyVim.root())
 end, { desc = "Terminal Float (Root Dir)" })
 
-map("n", "<leader>fT", function()
-  terminal_float(vim.fn.getcwd())
-end, { desc = "Terminal Float (cwd)" })
-
-map("n", "<leader>tb", function()
-  terminal_bottom(LazyVim.root())
-end, { desc = "Terminal Bottom (Root Dir)" })
-
-map("n", "<leader>tB", function()
-  terminal_bottom(vim.fn.getcwd())
-end, { desc = "Terminal Bottom (cwd)" })
-
-map({ "n", "t" }, "<C-/>", function()
-  terminal_float(LazyVim.root())
-end, { desc = "Terminal Float (Root Dir)" })
-
-map({ "n", "t" }, "<C-_>", function()
-  terminal_float(LazyVim.root())
-end, { desc = "which_key_ignore" })
-
--- ┌────────────────────────────────────────────────────────────────────────┐
--- │                     Quick Actions (42 - async)                         │
--- └────────────────────────────────────────────────────────────────────────┘
-
-local function async_cmd(cmd, label)
-  vim.notify(label .. "...", vim.log.levels.INFO)
-  vim.fn.jobstart(cmd, {
-    cwd = vim.fn.getcwd(),
-    stderr_buffered = true,
-    on_stderr = function(_, data)
-      if data and data[1] ~= "" then
-        vim.schedule(function()
-          vim.notify(table.concat(data, "\n"), vim.log.levels.ERROR)
-        end)
-      end
-    end,
-    on_exit = function(_, code)
-      vim.schedule(function()
-        if code == 0 then
-          vim.notify(label .. ": OK", vim.log.levels.INFO)
-        else
-          vim.notify(label .. ": FAILED (exit " .. code .. ")", vim.log.levels.ERROR)
-        end
-      end)
-    end,
-  })
-end
-
--- Compile C file (async, non-blocking — old version froze nvim with !)
-map("n", "<F5>", function()
-  vim.cmd("write")
-  async_cmd({ "cc", "-Wall", "-Werror", "-Wextra", vim.fn.expand("%"), "-o", vim.fn.expand("%:r") }, "Compile")
-end, { desc = "Compile C file" })
-
--- Run compiled file (in terminal split)
-map("n", "<F6>", function()
-  vim.cmd("split | terminal ./" .. vim.fn.expand("%:r"))
-end, { desc = "Run compiled file" })
-
--- Make (async)
-map("n", "<F7>", function() async_cmd({ "make" }, "make") end, { desc = "Run make" })
-map("n", "<F8>", function() async_cmd({ "make", "re" }, "make re") end, { desc = "Run make re" })
+-- F3-F8 : libres. Les anciens raccourcis make/compile/run ont été retirés
+-- (Pedro lance ces commandes via le terminal flottant `<C-/>`).

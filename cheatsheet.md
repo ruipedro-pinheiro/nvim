@@ -1,203 +1,239 @@
-# Nvim Cheatsheet — Pedro (LazyVim + Custom)
+# Nvim Cheatsheet — Pedro
 
-> Ouvre dans nvim : `nvim ~/.config/nvim/cheatsheet.md`
-> Leader = `<Space>`
+> Leader = `<Space>` · Ouvre cette cheatsheet : `nvim ~/.config/nvim/cheatsheet.md`
 
 ---
 
-## VIM FONDAMENTAUX (a drill avec vim-be-good)
+## QUICK START (les 10 keys must-know)
 
-### Operateurs (combiner avec motions/text objects)
+| Key | Action |
+|-----|--------|
+| `jk` ou `jj` | Sortir d'insert mode sans bouger les doigts d'`Esc` |
+| `Ctrl+S` | Sauver |
+| `<Space>e` | Explorateur fichiers |
+| `<Space>ff` | Find files (fuzzy) |
+| `<Space>fg` | Live grep dans le projet |
+| `<Space>gg` | Lazygit |
+| `<Space>cf` | Format manuel |
+| `gd` | Go to definition (LSP) |
+| `K` | Hover doc (LSP) |
+| `<Space>ca` | Code action (LSP) |
+
+Si tu connais que ces 10, tu fais déjà 60% du job au clavier.
+
+---
+
+## PLAN D'APPRENTISSAGE (8 semaines pour automatiser)
+
+| Semaine | Focus | Pour quoi |
+|---------|-------|-----------|
+| 1 | `hjkl`, `w/b/e`, `dd`, `cc`, `.` | Navigation et édition de base |
+| 2 | Text objects : `ciw`, `ci"`, `ci)`, `da}` | Le vrai power move vim |
+| 3 | `f/t/;/,`, `/`/`?`/`n`/`N` | Movement précis |
+| 4 | Marks (`m`, `'`), Flash (`s`) | Sauter rapidement |
+| 5 | Registers (`"a`, `"+`), Macros (`q`, `@`) | Automatiser le répétitif |
+| 6 | LSP (`gd`, `K`, `gr`, `<Space>ca/cr`) | Navigation code |
+| 7 | Surround (`cs/ds/ys`), Harpoon | Refacto + multi-fichier |
+| 8 | Debug (F9, `<Space>dc/do/dO/di`) | Sortir du `printf`-debugging |
+
+`:VimBeGood` chaque jour 10 min jusqu'à ce que les motions soient instinctives.
+
+---
+
+# VIM FONDAMENTAUX
+
+## Opérateurs (combinent avec motions/text objects)
 
 | Key | Action |
 |-----|--------|
 | `d` | Delete |
-| `c` | Change (delete + insert mode) |
-| `y` | Yank (copie dans registre vim) |
+| `c` | Change (delete + insert) |
+| `y` | Yank |
 | `v` | Visual select |
-| `>` / `<` | Indent / Dedent |
-| `gu` / `gU` | Lowercase / Uppercase |
+| `>` / `<` | Indent / dedent |
+| `gu` / `gU` | Lowercase / uppercase |
+| `=` | Auto-indent |
 
-### Motions (ou aller)
+## Motions (où aller)
 
 | Key | Action |
 |-----|--------|
-| `w` / `b` | Mot suivant / precedent |
-| `e` | Fin du mot |
-| `W` / `B` / `E` | Pareil mais WORD (ignore ponctuation) |
-| `0` / `$` | Debut / fin de ligne |
-| `^` | Premier char non-blanc |
-| `f{c}` / `F{c}` | Jump au char `c` (avant/arriere) |
-| `t{c}` / `T{c}` | Jump juste avant char `c` |
-| `;` / `,` | Repeter f/t suivant / precedent |
-| `gg` / `G` | Debut / fin du fichier |
-| `{` / `}` | Paragraphe precedent / suivant |
-| `%` | Parenthese/bracket correspondante |
-| `H` / `M` / `L` | Haut / milieu / bas de l'ecran |
+| `w` / `b` / `e` | Mot suivant / précédent / fin de mot |
+| `W` / `B` / `E` | Idem WORD (ignore ponctuation) |
+| `0` / `^` / `$` | Début / premier non-blanc / fin de ligne |
+| `f{c}` / `F{c}` | Jump au char `c` (avant / arrière) |
+| `t{c}` / `T{c}` | Idem mais s'arrête juste avant |
+| `;` / `,` | Répète f/t suivant / précédent |
+| `gg` / `G` | Début / fin du fichier |
+| `{` / `}` | Paragraphe précédent / suivant |
+| `%` | Saute à la parenthèse/bracket correspondante |
+| `H` / `M` / `L` | Haut / milieu / bas de l'écran |
 
-### Text Objects (le vrai power move)
+## Text Objects (le power move)
 
-Prefixe `i` = inside, `a` = around (inclut delimiteurs)
+`i` = inside, `a` = around (inclut délimiteurs)
 
-| Key | Action | Exemple |
-|-----|--------|---------|
-| `iw` / `aw` | Mot | `diw` = delete mot sous curseur |
-| `i"` / `a"` | Entre guillemets | `ci"` = change contenu entre `"` |
-| `i'` / `a'` | Entre apostrophes | `di'` = delete entre `'` |
-| `i)` / `a)` | Entre parentheses | `ci)` = change contenu entre `()` |
-| `i]` / `a]` | Entre crochets | `da]` = delete `[]` inclus |
-| `i}` / `a}` | Entre accolades | `ci}` = change dans `{}` |
-| `it` / `at` | Tag HTML/XML | `dit` = delete entre tags |
-| `ip` / `ap` | Paragraphe | `dap` = delete paragraphe |
-| `is` / `as` | Phrase (sentence) | `cis` = change phrase |
+| Key | Action |
+|-----|--------|
+| `iw` / `aw` | Mot |
+| `i"` / `a"` | Entre `"..."` |
+| `i'` / `a'` | Entre `'...'` |
+| `i)` / `a)` | Entre `(...)` |
+| `i]` / `a]` | Entre `[...]` |
+| `i}` / `a}` | Entre `{...}` |
+| `it` / `at` | Tag HTML/XML |
+| `ip` / `ap` | Paragraphe |
+| `is` / `as` | Phrase |
 
-### Combos essentiels
+**Combos essentiels** : `ciw` (change le mot), `ci"` (change le contenu d'une string), `da)` (supprime fonction et parenthèses), `yi}` (yank un bloc), `vit` (sélectionne dans un tag).
 
-| Combo | Action |
-|-------|--------|
-| `ciw` | Change le mot sous le curseur |
-| `ci"` | Change le contenu entre `"` |
-| `di)` | Delete le contenu entre `()` |
-| `da}` | Delete les `{}` et leur contenu |
-| `yiw` | Yank le mot |
-| `vi)` | Selectionne visuellement entre `()` |
-| `ct;` | Change jusqu'au `;` |
-| `df,` | Delete jusqu'a `,` inclus |
-| `.` | **Repeter** la derniere action |
-| `u` / `<C-r>` | Undo / Redo |
+## Search & Replace
+
+| Key | Action |
+|-----|--------|
+| `/foo` | Cherche `foo` en avant |
+| `?foo` | Cherche `foo` en arrière |
+| `n` / `N` | Match suivant / précédent |
+| `*` / `#` | Cherche le mot sous le curseur (avant/arrière) |
+| `:%s/old/new/g` | Replace tout dans le buffer |
+| `:%s/old/new/gc` | Replace avec confirmation |
+| `<Space>r` | Match flottant (custom) sur le mot sous curseur |
+| `<Space>R` | Match flottant avec saisie libre |
+
+## Marks (revenir où t'étais)
+
+| Key | Action |
+|-----|--------|
+| `m{a-z}` | Pose un mark local au buffer (lettres minuscules) |
+| `m{A-Z}` | Pose un mark global (majuscules — marche entre fichiers) |
+| `'a` | Saute au début de ligne du mark `a` |
+| `` `a `` | Saute exactement à la position du mark `a` |
+| `''` | Retour à la position avant le dernier saut |
+| `'.` | Retour à la dernière modif |
+| `<Space>sm` | Picker Snacks : voir tous tes marks avec preview, jump direct |
+
+> Workflow utile : `mA` sur ligne importante du fichier X → tu codes ailleurs → `<Space>sm` → tu vois tes marks listés → jump direct au mark A (cross-file). Plus rapide que Harpoon pour les "spots à retenir 5 minutes".
+
+## Registers (copy/paste avancé)
+
+| Key | Action |
+|-----|--------|
+| `"ay` | Yank dans le register `a` |
+| `"ap` | Paste depuis register `a` |
+| `"+y` / `"+p` | Yank / paste vers/depuis le clipboard système |
+| `"0` | Le dernier yank (jamais écrasé par delete) |
+| `:reg` | Liste tous les registers et leur contenu |
+
+## Macros (automatiser le répétitif)
+
+| Key | Action |
+|-----|--------|
+| `q{a-z}` | Démarre l'enregistrement dans register `a` |
+| `q` | Stoppe l'enregistrement |
+| `@a` | Rejoue la macro `a` |
+| `@@` | Rejoue la dernière macro |
+| `5@a` | Rejoue la macro `a` 5 fois |
+
+**Workflow** : `qa` → fais ton édition → `q` → place curseur ailleurs → `@a` ou `5@a`.
+
+## Undo / Redo / Repeat
+
+| Key | Action |
+|-----|--------|
+| `u` | Undo |
+| `Ctrl+R` | Redo |
+| `.` | **Répète la dernière action** (super utilisé avec text objects) |
 
 ---
 
-## TES KEYMAPS CUSTOM
+# TES KEYMAPS CUSTOM
 
-### General
-
-| Key | Action |
-|-----|--------|
-| `jk` / `jj` | Escape (insert mode) |
-| `<C-s>` | Save (LazyVim default) |
-| `<Space>q` | Quit |
-| `<Space>Q` | Force quit all |
-
-### Clipboard (separe du registre vim)
+## Général
 
 | Key | Action |
 |-----|--------|
-| `<Space>y` | Yank vers clipboard systeme |
-| `<Space>Y` | Yank ligne vers clipboard |
-| `<Space>p` | Paste depuis clipboard |
-| `<Space>P` | Paste avant depuis clipboard |
-| `p` (visual) | Paste sans ecraser le registre |
-| `dd` / `d{motion}` | Delete → registre vim (PAS clipboard) |
+| `jk` / `jj` | Escape |
+| `Ctrl+S` | Save |
+| `<Space>q` / `<Space>Q` | Quit / force quit all |
 
-### Navigation centree
+## Clipboard système (séparé du registre vim)
 
 | Key | Action |
 |-----|--------|
-| `<C-d>` | Scroll demi-page bas (centre) |
-| `<C-u>` | Scroll demi-page haut (centre) |
-| `n` / `N` | Recherche suivant/precedent (centre) |
+| `<Space>y` / `<Space>Y` | Yank vers clipboard / yank ligne |
+| `<Space>p` / `<Space>P` | Paste depuis clipboard / paste avant |
+| `p` (visual) | Paste sans écraser le registre |
 
-### Headers, build et format
-
-| Key | Action |
-|-----|--------|
-| `F1` | Inserer le header 42 |
-| `F2` | Inserer la banniere Pedro (auto-update au save) |
-| `<Space>cf` | Format manuel (clang-format pour C) |
-| `F5` | Compile fichier C (`cc -Wall -Werror -Wextra`, async) |
-| `F6` | Run le binaire compile |
-| `F7` | `make` (async) |
-| `F8` | `make re` (async) |
-
-### Terminal
+## Navigation centrée
 
 | Key | Action |
 |-----|--------|
-| `<Space>ft` | Terminal flottant (root du projet) |
-| `<Space>fT` | Terminal flottant (cwd) |
-| `<Space>tb` | Terminal split bas (root) |
-| `<Space>tB` | Terminal split bas (cwd) |
-| `<C-/>` | Terminal flottant (root) — raccourci |
-| `<Esc><Esc>` | Quitter mode terminal |
+| `Ctrl+D` / `Ctrl+U` | Scroll demi-page bas / haut (centré) |
+| `n` / `N` | Recherche suivant / précédent (centré) |
+
+## Headers & format (F-keys)
+
+| Key | Action |
+|-----|--------|
+| `F1` | Header 42 |
+| `F2` | Bannière Pedro (auto-update au save) |
+| `<Space>cf` | Format manuel (clang-format / prettier selon filetype) |
+
+> Pour `make`, `make re`, `make debug`, `make asan`, etc. : utilise le terminal flottant `Ctrl+/` et tape la commande.
+
+## Terminal
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+/` | Terminal flottant (root du projet) |
+| `<Space>ft` / `<Space>fT` | Terminal flottant (root / cwd) |
+| `<Space>tb` / `<Space>tB` | Terminal split bas (root / cwd) |
+| `Esc Esc` | Quitter mode terminal (revenir en NORMAL) |
+| `Ctrl+\ puis Ctrl+N` | Idem (alternative universelle si le double Esc passe pas) |
+
+> En mode terminal, toutes tes touches vont dans le programme. Tu dois sortir AVANT que `Ctrl+H/J/K/L` (navigation fenêtres) marche.
 
 ---
 
-## MATCH (search & replace flottant — `lua/plugins/match.lua`)
+# NAVIGATION (LazyVim)
 
-### Ouvrir
-
-| Key | Action |
-|-----|--------|
-| `<Space>sm` | Match avec mot sous curseur |
-| `<Space>sM` | Match avec saisie libre |
-| `:Match foo` | Ouvrir avec `foo` pre-rempli |
-| `:MatchLine` | Ouvrir avec la ligne courante |
-
-### Dans l'UI (en haut a droite)
+## Fichiers
 
 | Key | Action |
 |-----|--------|
-| `<Tab>` | Bascule Search ↔ Replace |
-| `<Esc>` / `<C-q>` | Fermer |
-| `<CR>` (search) | Passer au champ Replace |
-| `<CR>` (replace) | Remplacer TOUT |
-| `<Up>` (search) | Match precedent |
-| `<Down>` (search) | Match suivant |
-| `<Up>` (replace) | Remplacer le precedent |
-| `<Down>` (replace) | Remplacer le suivant |
-| `<C-u>` / `<C-r>` (replace) | Undo / Redo |
-
-### Toggles VSCode-like
-
-| Key | Action |
-|-----|--------|
-| `<A-c>` | Case-sensitive (Aa) |
-| `<A-w>` | Whole-word (ab) |
-| `<A-r>` | Regex (.*) |
-
----
-
-## HARPOON (navigation rapide entre fichiers)
-
-| Key | Action |
-|-----|--------|
-| `<Space>H` | Ajouter fichier a la liste |
-| `<Space>h` | Menu Harpoon (voir/reordonner) |
-| `<Space>1..9` | Switch vers fichier 1..9 |
-
-**Workflow** : ouvre tes 3-4 fichiers principaux, `<Space>H` chacun, puis `<Space>1/2/3` pour switcher instantanement.
-
----
-
-## LAZYVIM DEFAULTS (les plus utiles)
-
-> Picker = Snacks (pas Telescope). Meme keymaps mais UI plus rapide.
-
-### Fichiers & Navigation
-
-| Key | Action |
-|-----|--------|
-| `<Space>e` | Explorateur (neo-tree) |
+| `<Space>e` | Explorer (neo-tree) |
 | `<Space>ff` | Find files |
-| `<Space>fg` | Live grep (chercher du texte) |
+| `<Space>fg` | Live grep |
 | `<Space>fb` | Buffers ouverts |
-| `<Space>fr` | Fichiers recents |
+| `<Space>fr` | Fichiers récents |
 | `<Space>/` | Grep dans le projet |
 | `<Space>,` | Switcher de buffer |
 | `<Space>:` | Historique commandes |
 
-### Fenetres
+## Fenêtres
 
 | Key | Action |
 |-----|--------|
-| `<C-h/j/k/l>` | Naviguer entre fenetres |
-| `<C-Up/Down/Left/Right>` | Resize fenetre |
-| `<Space>-` | Split horizontal |
-| `<Space>\|` | Split vertical |
-| `<Space>wd` | Fermer la fenetre |
+| `Ctrl+H/J/K/L` | Naviguer entre fenêtres |
+| `Ctrl+Flèches` | Resize fenêtre |
+| `<Space>-` / `<Space>\|` | Split horizontal / vertical |
+| `<Space>wd` | Fermer la fenêtre |
 
-### LSP (quand un serveur est attache)
+## Harpoon (navigation rapide multi-fichiers)
+
+| Key | Action |
+|-----|--------|
+| `<Space>H` | Ajouter le fichier courant à la liste |
+| `<Space>h` | Menu Harpoon |
+| `<Space>1..9` | Switch instant vers fichier 1..9 |
+
+> Workflow : tes 3-4 fichiers principaux, `<Space>H` chacun, puis `<Space>1/2/3` pour switcher.
+
+---
+
+# CODE
+
+## LSP
 
 | Key | Action |
 |-----|--------|
@@ -211,102 +247,214 @@ Prefixe `i` = inside, `a` = around (inclut delimiteurs)
 | `<Space>ca` | Code action |
 | `<Space>cr` | Rename |
 | `<Space>cd` | Line diagnostic |
-| `]d` / `[d` | Diagnostic suivant/precedent |
+| `]d` / `[d` | Diagnostic suivant / précédent |
 
-### Git (LazyVim + lazygit + gitsigns)
-
-| Key | Action |
-|-----|--------|
-| `<Space>gg` | Lazygit (TUI git complet) |
-| `<Space>gf` | Git files |
-| `<Space>gc` | Git commits |
-| `<Space>gs` | Git status |
-
-### Gitsigns (hunks dans le fichier courant)
+## Trouble (diagnostics, TODOs, refs)
 
 | Key | Action |
 |-----|--------|
-| `]c` / `[c` | Hunk suivant / precedent |
-| `<Space>hs` | Stage hunk |
-| `<Space>hr` | Reset hunk |
-| `<Space>hS` | Stage tout le buffer |
-| `<Space>hR` | Reset tout le buffer |
-| `<Space>hu` | Undo stage hunk |
+| `<Space>xx` | Diagnostics du projet |
+| `<Space>xX` | Diagnostics du buffer |
+| `<Space>xt` | Tous les TODOs/FIXME du projet |
+| `<Space>xT` | Filtre TODO + FIX + FIXME |
+| `<Space>cS` | LSP refs / defs / impls |
+
+## Aerial (outline / symbols sidebar)
+
+Sidebar persistante avec la liste des fonctions/symbols du fichier. Suit ton curseur (le symbol courant est highlighté).
+
+| Key | Action |
+|-----|--------|
+| `<Space>cs` | Toggle la sidebar Aerial |
+| `j` / `k` (dans sidebar) | Naviguer entre symbols |
+| `<Entrée>` (dans sidebar) | Jump au symbol |
+| `q` (dans sidebar) | Fermer |
+
+## Todo-comments
+
+`TODO:`, `FIXME:`, `HACK:`, `WARN:`, `NOTE:`, `BUG:`, `PERF:`, `TEST:` highlightes auto.
+
+| Key | Action |
+|-----|--------|
+| `]t` / `[t` | TODO suivant / précédent |
+
+---
+
+# DEBUG (DAP)
+
+> **Prérequis** : binaire avec `-g`. Utilise `F3` (`make debug`) ou `F4` (`make asan`) avant de lancer.
+
+## Workflow rapide
+
+1. `F3` ou `F4` → recompile avec infos debug
+2. Curseur sur la ligne suspecte → `F9` pose un breakpoint
+3. `<Space>dc` → choisit "Launch" → entrée pour valider le binaire pré-rempli
+4. Le programme s'arrête sur le breakpoint, l'UI s'ouvre
+5. Avance avec les step keymaps ci-dessous
+6. `<Space>dt` quand fini
+
+## Contrôle de session
+
+| Key | Action |
+|-----|--------|
+| `F9` | Toggle breakpoint |
+| `<Space>dB` | Breakpoint avec condition |
+| `<Space>dc` | Run / continue |
+| `<Space>da` | Run avec arguments |
+| `<Space>dC` | Run jusqu'au curseur |
+| `<Space>dl` | Re-lance la dernière config |
+| `<Space>dt` | Terminate |
+| `<Space>dP` | Pause |
+
+## Step (F-keys = workflow rapide)
+
+| Key | Action |
+|-----|--------|
+| `F9` | Toggle breakpoint |
+| `F10` | Step **OVER** (passe la ligne, n'entre pas) |
+| `F11` | Step **INTO** (entre dans la fonction) |
+| `F12` | Step **OUT** (sort de la fonction) |
+| `<Space>dj` / `<Space>dk` | Descend / monte dans la pile d'appels |
+
+> Les `<Space>dO`, `<Space>di`, `<Space>do` marchent toujours, mais les F-keys sont plus rapides en flow continu.
+
+## Inspection
+
+| Key | Action |
+|-----|--------|
+| `<Space>du` | Toggle l'UI debug |
+| `<Space>de` | Eval expression sous le curseur |
+| `<Space>dr` | Toggle REPL |
+| `<Space>dw` | Hover flottant sur une variable |
+
+## Dans les panneaux DAP UI
+
+| Key | Action |
+|-----|--------|
+| `Entrée` | Déplier / replier (pointeur, struct, tableau) |
+| `o` | Ouvrir la valeur dans une fenêtre |
+| `e` | Éditer la valeur |
+| `w` | Ajouter au panneau watches |
+
+## Debug JS / TS
+
+3 configs apparaissent quand `<Space>dc` dans un `.js/.ts/.tsx/.jsx` :
+- **Launch Node** (current file)
+- **Launch Chrome** (localhost:3000)
+- **Attach** to running Node
+
+---
+
+# GIT
+
+## Lazygit + Gitsigns
+
+| Key | Action |
+|-----|--------|
+| `<Space>gg` | Lazygit (TUI complet) |
+| `]c` / `[c` | Hunk suivant / précédent |
+| `<Space>hs` / `<Space>hr` | Stage / reset hunk |
 | `<Space>hp` | Preview hunk |
 | `<Space>hb` | Blame ligne (full) |
-| `<Space>hd` | Diff this |
-| `<Space>hD` | Diff this avec parent |
-| `ih` (text obj) | Selectionne le hunk (`dih`, `vih`, etc.) |
+| `ih` (text obj) | Sélectionne le hunk (`dih`, `vih`) |
 
-### Toggles
+## Diffview
+
+| Key | Action |
+|-----|--------|
+| `<Space>gd` | Diff working tree vs HEAD |
+| `<Space>gh` | Historique du fichier courant |
+| `<Space>gH` | Historique de la branche |
+
+---
+
+# PLUGINS QUOTIDIENS
+
+## Surround
+
+| Key | Action |
+|-----|--------|
+| `cs"'` | Change `"hello"` → `'hello'` |
+| `ds"` | Delete les `"` autour |
+| `ysiw"` | Add `"..."` autour du mot |
+
+## Flash (jump rapide)
+
+| Key | Action |
+|-----|--------|
+| `s` | Tape 2 chars → jump direct |
+| `S` | Flash treesitter (sélection par node) |
+| `r` (operator) | Remote flash : `dr{flash}` delete à distance |
+
+## Match (search/replace flottant custom)
+
+| Key | Action |
+|-----|--------|
+| `<Space>r` | Match (mot sous curseur) |
+| `<Space>R` | Match (saisie libre) |
+| `Tab` (dans UI) | Bascule Search ↔ Replace |
+| `Entrée` (replace) | Remplace TOUT |
+| `Alt+C` / `Alt+W` / `Alt+R` | Toggle case / whole-word / regex |
+
+---
+
+# WEB DEV
+
+## Live preview HTML/CSS/Markdown
+
+| Key | Action |
+|-----|--------|
+| `<Space>lp` / `<Space>lP` | Start / stop |
+
+## REST client (fichiers `.http`)
+
+| Key | Action |
+|-----|--------|
+| `<Space>Rs` | Send request sous le curseur |
+| `<Space>Ra` | Send all requests |
+| `<Space>Rt` | Toggle vue body / headers |
+
+## Database (vim-dadbod-ui)
+
+| Key | Action |
+|-----|--------|
+| `<Space>Da` | Ajouter une connexion |
+| `<Space>Du` | Toggle l'UI |
+
+## Couleurs inline
+
+Auto sur CSS/SCSS/HTML/JS/TS/Lua : `#ff5733`, `rgb()`, `bg-red-500` (Tailwind) → couleur en background.
+
+---
+
+# APPENDICES
+
+## Compteur fonction 42 (statusline)
+
+`Fn:N/25` quand le curseur est dans une fonction C/C++ :
+- vert si <20 lignes
+- jaune si 20-24
+- rouge si ≥25 (norme violée)
+
+## Toggles utiles
 
 | Key | Action |
 |-----|--------|
 | `<Space>uf` | Toggle auto-format |
-| `<Space>us` | Toggle spelling |
-| `<Space>uw` | Toggle word wrap |
-| `<Space>ul` | Toggle line numbers |
 | `<Space>ud` | Toggle diagnostics |
+| `<Space>ul` | Toggle line numbers |
+| `<Space>uw` | Toggle word wrap |
+| `<Space>us` | Toggle spelling |
 
----
-
-## PLUGINS
-
-### Flash (jump ultra-rapide)
-
-| Key | Action |
-|-----|--------|
-| `s` | Flash jump — tape 2 chars, jump direct |
-| `S` | Flash treesitter — select par node |
-| `r` (operator) | Remote flash (apres `d`/`y`/`c`) |
-
-### Surround
-
-| Key | Action | Exemple |
-|-----|--------|---------|
-| `cs{old}{new}` | Change surrounding | `cs"'` : `"hello"` → `'hello'` |
-| `ds{char}` | Delete surrounding | `ds"` : `"hello"` → `hello` |
-| `ysiw{char}` | Add surrounding | `ysiw"` : `hello` → `"hello"` |
-| `ysa{obj}{char}` | Add around obj | `ysa)"` : `(foo)` → `"(foo)"` |
-
-### Session (persistence)
+## Sessions
 
 | Key | Action |
 |-----|--------|
-| `<Space>qs` | Restore session (dossier courant) |
-| `<Space>ql` | Restore derniere session |
-| `<Space>qd` | Don't save current session |
+| `<Space>qs` | Restore session du dossier courant |
+| `<Space>ql` | Restore dernière session |
 
-### Noice (cmdline et notifications)
+## Vim-be-good (entraînement)
 
-La cmdline `:` apparait flottante au centre. Search `/`/`?` aussi.
-Pas de keymap specifique — c'est juste l'UI.
+`:VimBeGood` pour lancer.
 
-### Lualine — compteur de lignes de fonction (fichiers C/C++ uniquement)
-
-Affiche `Fn:N/25` dans la statusline quand tu es dans une fonction :
-- vert si <20 lignes
-- jaune si 20-24
-- rouge si ≥25 (norme 42 violee)
-
----
-
-## VIM-BE-GOOD (entrainement)
-
-Lance dans nvim : `:VimBeGood`
-
-Modes disponibles :
-- **hjkl** — navigation basique
-- **word** — motions w/b/e
-- **delete** — d + motions
-- **change** — c + motions (le plus utile a drill)
-
----
-
-## ORDRE D'APPRENTISSAGE RECOMMANDE
-
-1. **Semaine 1** : `hjkl`, `w/b/e`, `dd`, `cc`, `ciw`, `ci"`, `di)`, `.`
-2. **Semaine 2** : `f/t` + `;`, text objects (`iw`, `i"`, `i)`, `i}`), `<C-d>/<C-u>`
-3. **Semaine 3** : Flash (`s`), Harpoon (`<Space>H`, `<Space>1..9`), Snacks picker (`<Space>ff/fg`)
-4. **Semaine 4** : Surround (`cs/ds/ys`), LSP (`gd`, `K`, `<Space>ca/cr`), macros (`q`)
-5. **Ongoing** : `:VimBeGood` chaque jour 10 min jusqu'a ce que ce soit instinctif
+Dans le menu : `dd` sur la difficulte (recommande **noob** pour commencer = 100s par exercice), puis `dd` sur le jeu. Le mode **change** est le plus utile a drill (`ci{`, `ci"`, `ci)`).

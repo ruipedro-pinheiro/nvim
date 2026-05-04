@@ -15,7 +15,6 @@ return {
         },
         documentation = {
           auto_show = false,
-          auto_show_delay_ms = 120,
           window = {
             border = "rounded",
             winblend = 0,
@@ -39,12 +38,19 @@ return {
         default = { "lsp", "path", "buffer" },
         providers = {
           lsp = {
+            -- Only show LSP suggestions once 3+ chars typed (reduces
+            -- noise from clangd dumping every in-scope symbol on 1 letter).
+            min_keyword_length = 3,
             transform_items = function(_, items)
               return vim.tbl_filter(function(item)
                 return item.kind ~= require("blink.cmp.types").CompletionItemKind.Snippet
               end, items)
             end,
           },
+          buffer = {
+            min_keyword_length = 3,
+          },
+          -- path: pas de min_keyword_length (déclenché par `/`, pas par lettres)
         },
       },
     },
