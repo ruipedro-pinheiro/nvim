@@ -1,0 +1,64 @@
+-- ╔══════════════════════════════════════════════════════════════════════════╗
+-- ║                      VS Code-like Experience                           ║
+-- ╚══════════════════════════════════════════════════════════════════════════╝
+
+return {
+  -- ┌────────────────────────────────────────────────────────────────────────┐
+  -- │                  Surround (Change quotes/brackets easily)              │
+  -- └────────────────────────────────────────────────────────────────────────┘
+  {
+    "kylechui/nvim-surround",
+    version = "*",
+    event = "VeryLazy",
+    -- cs"' change quotes · ds" delete surround · ysiw" surround word
+    opts = {},
+  },
+
+  -- ┌────────────────────────────────────────────────────────────────────────┐
+  -- │                  vim-be-good (Practice vim motions)                    │
+  -- └────────────────────────────────────────────────────────────────────────┘
+  {
+    "ThePrimeagen/vim-be-good",
+    cmd = "VimBeGood",
+  },
+
+  -- ┌────────────────────────────────────────────────────────────────────────┐
+  -- │              Noice UI (cmdline/messages in clean overlays)             │
+  -- └────────────────────────────────────────────────────────────────────────┘
+  {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    opts = function(_, opts)
+      opts.lsp = opts.lsp or {}
+      opts.lsp.override = {
+        ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+        ["vim.lsp.util.stylize_markdown"] = true,
+        -- Critical: routes hover/signature through noice's overlay view
+        -- instead of nvim's native focusable float. Without this, K twice
+        -- jumps the cursor INTO the hover (default nvim behavior).
+        ["vim.lsp.util.open_floating_preview"] = true,
+      }
+
+      opts.presets = vim.tbl_deep_extend("force", opts.presets or {}, {
+        bottom_search = true,
+        command_palette = true,
+        long_message_to_split = true,
+        lsp_doc_border = true,
+      })
+
+      opts.cmdline = vim.tbl_deep_extend("force", opts.cmdline or {}, {
+        view = "cmdline_popup",
+        format = {
+          cmdline = { pattern = "^:", icon = "", lang = "vim" },
+          search_down = { kind = "search", pattern = "^/", icon = " " },
+          search_up = { kind = "search", pattern = "^%?", icon = " " },
+          filter = { pattern = "^:%s*!", icon = "$", lang = "bash" },
+          lua = { pattern = "^:%s*lua%s+", icon = "", lang = "lua" },
+          help = { pattern = "^:%s*he?l?p?%s+", icon = "?" },
+        },
+      })
+
+      return opts
+    end,
+  },
+}

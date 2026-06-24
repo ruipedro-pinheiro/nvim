@@ -1,0 +1,21 @@
+-- Template — copy this file to lua/personal.lua (gitignored) and put YOUR info.
+-- Without lua/personal.lua, the banner falls back to a generic placeholder and
+-- the 42 header uses placeholder login/mail (set them here).
+return {
+  -- <F2> banner body (raw C-comment lines, width ~76). Keep the /* ... */ frame.
+  banner = {
+    "/*                                                                            */",
+    "/*                              YOUR NAME HERE                                */",
+    "/*                              YOUR TITLE HERE                               */",
+    "/*                                                                            */",
+    "/*                C  •  C++  •  WEB  •  GITHUB.COM/YOUR-HANDLE                 */",
+    "/*                                                                            */",
+  },
+  -- Substring used to detect an existing banner (for auto-update on save).
+  banner_marker = "YOUR NAME HERE",
+  -- 42-header.nvim identity (https://github.com/Diogo-ss/42-header.nvim).
+  header42 = {
+    user = "your_login",
+    mail = "your_login@student.42.fr",
+  },
+}

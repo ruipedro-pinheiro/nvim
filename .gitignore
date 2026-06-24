@@ -1,0 +1,3 @@
+.repro
+*.log
+lua/personal.lua
