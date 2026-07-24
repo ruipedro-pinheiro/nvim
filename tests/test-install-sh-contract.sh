@@ -17,7 +17,10 @@ fi
 grep -qF 'cleanup_old_install' "$INSTALL" || fail "nettoyage des anciennes installations absent"
 grep -qF '"$OPT_DIR/nvim-nightly"' "$INSTALL" || fail "ancien dossier nvim-nightly non nettoyé"
 grep -qF '"$OPT_DIR"/nvim-nightly.bak-*' "$INSTALL" || fail "anciens backups nightly non nettoyés"
-grep -qF '"$BIN_DIR/nvim-nightly"' "$INSTALL" || fail "ancien wrapper nightly non nettoyé"
+grep -qF 'for old_bin in nvim nvim-nightly node npm npx rg fd tree-sitter norminette unzip; do' "$INSTALL" || fail "anciens binaires directs de la toolchain non nettoyés"
+if grep -E 'old_bin in .*\b(lazygit|lazycommit|zoxide|gdb)\b' "$INSTALL" >/dev/null; then
+  fail "le cleanup nvim touche un binaire géré hors du repo nvim"
+fi
 grep -qF '"$HOME/.local/share/nvim"' "$INSTALL" || fail "anciennes données Neovim non nettoyées"
 grep -qF '"$HOME/.local/state/nvim"' "$INSTALL" || fail "ancien état Neovim non nettoyé"
 grep -qF '"$HOME/.cache/nvim"' "$INSTALL" || fail "ancien cache Neovim non nettoyé"

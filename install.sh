@@ -39,7 +39,9 @@ cleanup_old_install() {
   for old in "$OPT_DIR/nvim-nightly" "$OPT_DIR"/nvim-nightly.bak-*; do
     [ ! -e "$old" ] || rm -rf "$old"
   done
-  rm -f "$BIN_DIR/nvim" "$BIN_DIR/nvim-nightly"
+  for old_bin in nvim nvim-nightly node npm npx rg fd tree-sitter norminette unzip; do
+    rm -f "$BIN_DIR/$old_bin"
+  done
   mkdir -p "$TOOL"
   export PATH="$TOOL:$PATH"
 }
