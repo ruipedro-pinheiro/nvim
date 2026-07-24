@@ -24,6 +24,9 @@ fi
 grep -qF '"$HOME/.local/share/nvim"' "$INSTALL" || fail "anciennes données Neovim non nettoyées"
 grep -qF '"$HOME/.local/state/nvim"' "$INSTALL" || fail "ancien état Neovim non nettoyé"
 grep -qF '"$HOME/.cache/nvim"' "$INSTALL" || fail "ancien cache Neovim non nettoyé"
+grep -qF 'git@github.com:ruipedro-pinheiro/nvim.git' "$INSTALL" || fail "remote SSH du submodule non reconnu"
+grep -qF '[ -f "$CFG/.git" ]' "$INSTALL" || fail "checkout submodule non reconnu"
+grep -qF 'Config fournie par le submodule dotfiles' "$INSTALL" || fail "branche submodule absente"
 
 check_line=$(grep -nF 'check-nvim-nightly.sh' "$INSTALL" | sed -n '1s/:.*//p')
 lazy_line=$(grep -nF '+Lazy! sync' "$INSTALL" | sed -n '1s/:.*//p')

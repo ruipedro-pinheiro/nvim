@@ -17,6 +17,7 @@ OPT_DIR="$HOME/.local/opt"
 TC="$OPT_DIR/nvim-toolchain"                # racine toolchain isolée
 TOOL="$TC/bin"                             # binaires toolchain — HORS PATH global
 REPO="https://github.com/ruipedro-pinheiro/nvim.git"
+REPO_SSH="git@github.com:ruipedro-pinheiro/nvim.git"
 ARCH="linux-x86_64"
 WITH_FONT="${WITH_FONT:-1}"
 RG_VER="15.1.0"; FD_VER="10.4.2"; TS_VER="0.25.10"; NODE_VER="v24.18.0"
@@ -44,6 +45,14 @@ cleanup_old_install() {
   done
   mkdir -p "$TOOL"
   export PATH="$TOOL:$PATH"
+}
+
+is_own_config() {
+  remote=$(git -C "$CFG" remote get-url origin 2>/dev/null) || return 1
+  case "$remote" in
+    "$REPO"|"${REPO%.git}"|"$REPO_SSH") return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # ── 0. Prérequis système (non posables sans root : on vérifie + on alerte) ────
@@ -118,8 +127,12 @@ esac
 # ── 10. Config nvim (absente / la tienne / étrangère->backup) ────────────────
 CFG="$HOME/.config/nvim"
 if [ ! -e "$CFG" ]; then log "Clone config"; git clone "$REPO" "$CFG" || warn "clone KO"
-elif [ -d "$CFG/.git" ] && [ "$(git -C "$CFG" remote get-url origin 2>/dev/null)" = "$REPO" ]; then
-  log "Config déjà la tienne -> pull"; git -C "$CFG" pull --ff-only 2>/dev/null || warn "pull KO (modifs locales ?)"
+elif is_own_config; then
+  if [ -f "$CFG/.git" ]; then
+    log "Config fournie par le submodule dotfiles -> conservée"
+  else
+    log "Config déjà la tienne -> pull"; git -C "$CFG" pull --ff-only 2>/dev/null || warn "pull KO (modifs locales ?)"
+  fi
 else BK="$CFG.bak.$(date +%Y%m%d-%H%M%S)"; warn "Config étrangère -> backup $BK"; mv "$CFG" "$BK"; git clone "$REPO" "$CFG" || warn "clone KO"; fi
 
 # ── 11. Bootstrap (nvim, via son wrapper, voit la toolchain) ─────────────────
