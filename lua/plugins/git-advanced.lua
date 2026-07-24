@@ -1,9 +1,9 @@
 -- ╔══════════════════════════════════════════════════════════════════════════╗
--- ║                       Git avance: diffview                               ║
--- ║  Complement de gitsigns + lazygit (deja en place):                       ║
--- ║  - Diff visuel multi-fichier entre deux refs/commits                     ║
--- ║  - Historique d'un fichier (et naviguer dans les versions)               ║
--- ║  - Resolution de conflits avec une UI 3-way                              ║
+-- ║                       Advanced Git: diffview                              ║
+-- ║  Complement to gitsigns + lazygit (already in place):                    ║
+-- ║  - Visual multi-file diff between two refs/commits                       ║
+-- ║  - File history (and version navigation)                                 ║
+-- ║  - Conflict resolution with a 3-way UI                                   ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 
 return {

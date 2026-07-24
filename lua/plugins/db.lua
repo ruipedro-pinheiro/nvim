@@ -1,9 +1,9 @@
 -- ╔══════════════════════════════════════════════════════════════════════════╗
 -- ║                       Database UI (vim-dadbod)                           ║
--- ║  Postgres / MySQL / SQLite / MongoDB / Redis depuis nvim                 ║
--- ║  - <leader>Du : ouvrir l'UI                                              ║
--- ║  - <leader>Df : trouver le buffer DB                                     ║
--- ║  - <leader>Dr : run la query sous le curseur                             ║
+-- ║  Postgres / MySQL / SQLite / MongoDB / Redis from nvim                   ║
+-- ║  - <leader>Du : open the UI                                              ║
+-- ║  - <leader>Df : find the DB buffer                                       ║
+-- ║  - <leader>Dr : run the query under the cursor                           ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 
 return {

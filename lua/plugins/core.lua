@@ -168,11 +168,11 @@ return {
   {
     "nvim-lualine/lualine.nvim",
     opts = function(_, opts)
-      -- Cache du compteur de lignes par fonction.
-      -- Lualine appelle get_function_lines() à chaque redraw (CursorMoved,
-      -- ModeChanged, BufEnter, etc. = plusieurs fois par seconde). Treesitter
-      -- parse + tree walk c'est pas gratuit. On cache par (bufnr, ligne, col,
-      -- changedtick) et on retourne direct si rien n'a bougé.
+      -- Function line-count cache.
+      -- Lualine calls get_function_lines() on every redraw (CursorMoved,
+      -- ModeChanged, BufEnter, etc. = several times per second). Treesitter
+      -- parsing + tree walking is not free. Cache by (bufnr, line, col,
+      -- changedtick) and return immediately when nothing changed.
       local cache = {}
 
       local function compute_function_lines(bufnr, row, col)

@@ -27,10 +27,19 @@ grep -qF '"$HOME/.cache/nvim"' "$INSTALL" || fail "ancien cache Neovim non netto
 grep -qF 'git@github.com:ruipedro-pinheiro/nvim.git' "$INSTALL" || fail "remote SSH du submodule non reconnu"
 grep -qF '[ -f "$CFG/.git" ]' "$INSTALL" || fail "checkout submodule non reconnu"
 grep -qF 'Config fournie par le submodule dotfiles' "$INSTALL" || fail "branche submodule absente"
+grep -qF 'prune_config_backups' "$INSTALL" || fail "anciens backups de config non limités"
+grep -qF '"$HOME/.config"/nvim.bak.*' "$INSTALL" || fail "glob des backups nvim absent"
+grep -qF '[ -z "$keep" ] || rm -rf "$keep"' "$INSTALL" || fail "anciens backups nvim non supprimés"
+grep -qF 'keep="$backup"' "$INSTALL" || fail "backup nvim le plus récent non conservé"
+grep -qF 'MIN_FREE_MB="2048"' "$INSTALL" || fail "réserve disque de 2 Gio absente"
+grep -qF 'require_free_space' "$INSTALL" || fail "préflight espace disque absent"
+grep -qF 'for path in "$HOME" "$TMP"' "$INSTALL" || fail "espace temporaire non vérifié"
 
 check_line=$(grep -nF 'check-nvim-nightly.sh' "$INSTALL" | sed -n '1s/:.*//p')
 lazy_line=$(grep -nF '+Lazy! sync' "$INSTALL" | sed -n '1s/:.*//p')
+prune_line=$(grep -nF 'prune_config_backups' "$INSTALL" | sed -n '2s/:.*//p')
 [ -n "$check_line" ] && [ -n "$lazy_line" ] || fail "lignes check/Lazy introuvables"
 [ "$check_line" -lt "$lazy_line" ] || fail "vérification après Lazy sync"
+[ -n "$prune_line" ] && [ "$prune_line" -lt "$lazy_line" ] || fail "backups nvim non purgés avant bootstrap"
 
 printf 'ok - contrat install.sh\n'

@@ -8,9 +8,9 @@ return {
       })
 
       opts.formatters_by_ft = opts.formatters_by_ft or {}
-      -- Pas de formatter C/C++ : la norme 42 se fait à la main. clang-format
-      -- (défaut LLVM) casserait tabs/accolades ; et <Space>cf ne doit rien
-      -- reformater en C (clangd est aussi en --fallback-style=none, cf lsp.lua).
+      -- No C/C++ formatter: the 42 coding standard is applied manually. clang-format
+      -- (LLVM default) would break tabs/braces; <Space>cf must not
+      -- reformat C (clangd also uses --fallback-style=none, cf lsp.lua).
       opts.formatters_by_ft.css = { "prettierd", "prettier" }
       opts.formatters_by_ft.html = { "prettierd", "prettier" }
       opts.formatters_by_ft.javascript = { "prettierd", "prettier" }

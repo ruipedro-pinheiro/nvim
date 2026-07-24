@@ -13,10 +13,10 @@ vim.opt.softtabstop = 4
 
 -- LazyVim behavior
 -- Autoformat-on-save is ON globally (LazyVim default), then disabled per-buffer
--- for C/C++/H in autocmds.lua — manual format only there (norme 42 + anti-roulettes).
+-- for C/C++/H in autocmds.lua; those filetypes use manual formatting for 42 compliance.
 --
--- AI completion désactivée : pas de Copilot/Codeium dans le menu de blink.cmp.
--- Cohérent avec la philosophie anti-roulettes + éthique 42 sur le code gradué.
+-- AI completion disabled: no Copilot/Codeium in the blink.cmp menu.
+-- Consistent with anti-roulette workflow and 42 ethics for graded code.
 vim.g.ai_cmp = false
 
 -- Search
@@ -32,10 +32,10 @@ vim.opt.signcolumn = "auto"
 vim.opt.scrolloff = 8
 vim.opt.pumheight = 12
 
--- Files (filets de sécurité contre crash + persistence undo)
--- vim.opt.swapfile par défaut = true (filet contre crash). On garde.
-vim.opt.backup = false       -- pas besoin de backup files (.bak)
-vim.opt.undofile = true      -- undo persistent entre sessions
+-- Files (crash safety nets + persistent undo)
+-- vim.opt.swapfile default = true (crash safety net). Kept enabled.
+vim.opt.backup = false       -- backup files (.bak) are unnecessary
+vim.opt.undofile = true      -- persistent undo between sessions
 
 -- Disable auto-save — save explicitly with <C-s>
 vim.opt.autowrite = false

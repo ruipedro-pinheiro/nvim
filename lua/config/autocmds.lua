@@ -10,9 +10,9 @@ local autocmd = vim.api.nvim_create_autocmd
 -- ┌────────────────────────────────────────────────────────────────────────┐
 -- │                      C filetype settings                               │
 -- │                                                                        │
--- │  - Tabs reels (norme 42 + anti-roulettes on autoformat)                │
+-- │  - Real tabs (42 coding standard, no automatic formatting)             │
 -- │  - colorcolumn=80                                                      │
--- │  - autoformat OFF per-buffer : tu formates a la main avec <Space>cf    │
+-- │  - autoformat OFF per-buffer: manual formatting with <Space>cf         │
 -- └────────────────────────────────────────────────────────────────────────┘
 augroup("CIndent", { clear = true })
 autocmd("FileType", {
@@ -24,7 +24,7 @@ autocmd("FileType", {
     vim.opt_local.shiftwidth = 4
     vim.opt_local.softtabstop = 4
     vim.opt_local.colorcolumn = "80"
-    -- Override the global autoformat-on-save: in C/C++ on garde la main.
+    -- Override global autoformat-on-save: C/C++ stay manual.
     vim.b.autoformat = false
   end,
 })

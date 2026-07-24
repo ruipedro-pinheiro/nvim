@@ -7,7 +7,7 @@
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 
 return {
-  -- Live preview: ouvre un serveur local et le navigateur, recharge au save
+  -- Live preview: opens a local server and browser, reloads on save
   {
     "brianhuster/live-preview.nvim",
     cmd = { "LivePreview" },
@@ -21,12 +21,12 @@ return {
     },
   },
 
-  -- markdown-preview.nvim (tiré par l'extra lang.markdown) : abandonné depuis
-  -- 2023 + build yarn fragile, et live-preview ci-dessus couvre déjà la preview
-  -- navigateur (markdown inclus). On le désactive.
+  -- markdown-preview.nvim (pulled by the lang.markdown extra): abandoned since
+  -- 2023 + fragile yarn build, and live-preview above already covers browser
+  -- preview (including markdown). Disable it.
   { "iamcco/markdown-preview.nvim", enabled = false },
 
-  -- REST client: fichiers .http style VSCode REST Client / JetBrains
+  -- REST client: .http files in VSCode REST Client / JetBrains style
   {
     "mistweaverco/kulala.nvim",
     ft = { "http", "rest" },
@@ -42,7 +42,7 @@ return {
     },
   },
 
-  -- Colorizer: affiche la couleur reelle a cote de #ff5733, rgb(...), tailwind
+  -- Colorizer: shows the real color next to #ff5733, rgb(...), tailwind
   {
     "NvChad/nvim-colorizer.lua",
     event = { "BufReadPre", "BufNewFile" },
@@ -54,7 +54,7 @@ return {
         "lua", "vim", "conf",
       },
       user_default_options = {
-        names = false,        -- pas de "red", "blue" en couleur
+        names = false,        -- no "red", "blue" as colors
         RGB = true,           -- #RGB
         RRGGBB = true,        -- #RRGGBB
         RRGGBBAA = true,      -- #RRGGBBAA
@@ -62,14 +62,14 @@ return {
         hsl_fn = true,        -- hsl(...)
         css = true,           -- enable everything css
         css_fn = true,
-        tailwind = true,      -- bg-red-500 et compagnie
-        mode = "background",  -- ou "foreground" / "virtualtext"
+        tailwind = true,      -- bg-red-500 and similar
+        mode = "background",  -- or "foreground" / "virtualtext"
       },
     },
   },
 
-  -- Activer snacks.image (deja installe, juste a enable)
-  -- Utilise le protocole graphique kitty (que tu as) pour afficher les images
+  -- Enable snacks.image (already installed, only needs enabling)
+  -- Uses the kitty graphics protocol to display images
   {
     "folke/snacks.nvim",
     opts = {

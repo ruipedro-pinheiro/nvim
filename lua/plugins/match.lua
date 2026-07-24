@@ -1,40 +1,40 @@
 -- ╔══════════════════════════════════════════════════════════════════════════╗
--- ║              Match — Search/Replace flottant (style VSCode)              ║
+-- ║              Match — Floating Search/Replace (VSCode style)              ║
 -- ║                                                                          ║
--- ║  Adapté du plugin ankushbhagats/match.nvim (commit 53bfa67), sous       ║
--- ║  licence MIT. Code presque identique à l'original, ajout local des 3    ║
--- ║  toggles VSCode : case-sensitive (Aa), whole-word (ab), regex (.*).     ║
+-- ║  Adapted from ankushbhagats/match.nvim (commit 53bfa67), under the MIT  ║
+-- ║  license. Code is almost identical to upstream, with 3 local VSCode     ║
+-- ║  toggles: case-sensitive (Aa), whole-word (ab), regex (.*).             ║
 -- ║                                                                          ║
--- ║  Position : top-right (anchor "NE", col = vim.o.columns).               ║
+-- ║  Position: top-right (anchor "NE", col = vim.o.columns).                ║
 -- ║                                                                          ║
--- ║  COMMANDES                                                               ║
--- ║    :Match [texte]   Ouvre l'UI avec [texte] pré-rempli                  ║
--- ║    :MatchWord       Ouvre avec le mot sous le curseur                   ║
--- ║    :MatchLine       Ouvre avec la ligne courante                        ║
+-- ║  COMMANDS                                                                ║
+-- ║    :Match [text]    Opens the UI with [text] prefilled                  ║
+-- ║    :MatchWord       Opens with the word under the cursor                ║
+-- ║    :MatchLine       Opens with the current line                         ║
 -- ║                                                                          ║
--- ║  DANS L'UI                                                               ║
--- ║    <Tab>            Bascule Search ↔ Replace                            ║
--- ║    <Esc> / <C-q>    Ferme                                               ║
+-- ║  IN THE UI                                                               ║
+-- ║    <Tab>            Toggles Search ↔ Replace                            ║
+-- ║    <Esc> / <C-q>    Closes                                              ║
 -- ║                                                                          ║
 -- ║  Mode SEARCH                                                             ║
--- ║    <CR>             Passe au champ Replace                              ║
--- ║    <Up>             Match précédent                                     ║
--- ║    <Down>           Match suivant                                       ║
+-- ║    <CR>             Moves to the Replace field                          ║
+-- ║    <Up>             Previous match                                      ║
+-- ║    <Down>           Next match                                          ║
 -- ║                                                                          ║
 -- ║  Mode REPLACE                                                            ║
--- ║    <CR>             Remplace TOUT                                       ║
--- ║    <Up>             Remplace le match précédent                         ║
--- ║    <Down>           Remplace le match suivant                           ║
--- ║    <C-u> / <C-r>    Undo / Redo (annule un replace)                     ║
+-- ║    <CR>             Replaces ALL                                        ║
+-- ║    <Up>             Replaces the previous match                         ║
+-- ║    <Down>           Replaces the next match                             ║
+-- ║    <C-u> / <C-r>    Undo / Redo (undoes one replace)                    ║
 -- ║                                                                          ║
--- ║  TOGGLES (n'importe où dans l'UI, mode insert ou normal)                ║
+-- ║  TOGGLES (anywhere in the UI, insert or normal mode)                    ║
 -- ║    <A-c>            Case-sensitive (Aa)                                 ║
 -- ║    <A-w>            Whole-word (ab)                                     ║
 -- ║    <A-r>            Regex (.*)                                          ║
 -- ║                                                                          ║
--- ║  KEYMAPS DÉFAUT (déclarés dans le plugin spec en bas de ce fichier)     ║
--- ║    <leader>r        :MatchWord (mot sous le curseur)                    ║
--- ║    <leader>R        :Match (saisie libre)                               ║
+-- ║  DEFAULT KEYMAPS (declared in the plugin spec at the bottom of file)    ║
+-- ║    <leader>r        :MatchWord (word under cursor)                      ║
+-- ║    <leader>R        :Match (free input)                                  ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 
 local config = {
@@ -44,37 +44,37 @@ local config = {
   border_hl = "FloatBorder",
 }
 
--- État local : toggles + références aux fenêtres
+-- Local state: toggles + window references
 local toggles = { case_sensitive = false, whole_word = false, regex = false }
 local wins = {}
-local searchText = ""    -- pattern Vim final (avec modifiers \c \C \< \> et escapes)
-local rawSearch = ""     -- texte brut tapé par l'utilisateur (pour reconstruire au toggle)
+local searchText = ""    -- final Vim pattern (with \c \C \< \> modifiers and escapes)
+local rawSearch = ""     -- raw typed text (used to rebuild on toggle)
 local replaceText = ""
 local replaceCount = 0
 local historyCount = 0
-local original_pos = { 1, 0 }  -- position du curseur au moment de l'ouverture (pour search incrémentale "VSCode-style" qui repart de là, pas de la ligne 1)
-local saved_hlsearch = nil     -- hlsearch de l'utilisateur : snapshot à open(), restauré à close()
+local original_pos = { 1, 0 }  -- cursor position at open time (VSCode-style incremental search restarts there, not at line 1)
+local saved_hlsearch = nil     -- hlsearch snapshot at open(), restored at close()
 
 local ns = vim.api.nvim_create_namespace("match_local")
 
--- Échappement de `replaceText` pour `:s/pat/rep/`.
+-- Escape `replaceText` for `:s/pat/rep/`.
 --
--- - Toujours :
---     `/`         délimiteur du substitute → escapé en `\/`
---     newline     remplacé par `\r` (séquence vim sub = saut de ligne)
+-- - Always:
+--     `/`         substitute delimiter → escaped as `\/`
+--     newline     replaced with `\r` (vim sub sequence = line break)
 --
--- - Mode régex OFF (literal) :
---     `\`         escapé en `\\` (sinon vim sub interprète \1-\9, \&, etc.)
---     `&`         escapé en `\&` (sinon = matched text)
---     `~`         escapé en `\~` (sinon = previous replacement)
---   → résultat : le texte est inséré tel quel, peu importe son contenu.
+-- - Regex mode OFF (literal):
+--     `\`         escaped as `\\` (otherwise vim sub interprets \1-\9, \&, etc.)
+--     `&`         escaped as `\&` (otherwise = matched text)
+--     `~`         escaped as `\~` (otherwise = previous replacement)
+--   → result: text is inserted exactly as-is, whatever its contents.
 --
--- - Mode régex ON :
---     `\` `&` `~` PAS escapés → l'utilisateur peut utiliser \1-\9, &, ~
---     comme références aux captures et matched text.
+-- - Regex mode ON:
+--     `\` `&` `~` NOT escaped → \1-\9, &, ~ can be used as capture
+--     references and matched text.
 --
--- Ordre des substitutions important : `\` AVANT `/` et `& ~`
--- pour éviter de double-escaper le `\` injecté par les autres règles.
+-- Substitution order matters: `\` BEFORE `/` and `& ~`
+-- to avoid double-escaping the `\` injected by the other rules.
 local function escape_replacement(s)
   if toggles.regex then
     return (s:gsub("/", "\\/"):gsub("\n", "\\r"))
@@ -87,12 +87,12 @@ local function escape_replacement(s)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Construction du pattern Vim selon les toggles                          │
+-- │  Build the Vim pattern according to toggles                             │
 -- │                                                                          │
--- │  - regex OFF → on échappe les metachars de l'input                      │
--- │  - regex ON  → on garde les metachars MAIS on échappe `/` (qui sinon    │
--- │    casse `:s/pat/rep/` parce que c'est le délimiteur du substitute)     │
--- │  - whole_word ON → on entoure de \< \> (bordures de mot)                │
+-- │  - regex OFF → escape input metachars                                   │
+-- │  - regex ON  → keep metachars BUT escape `/` (otherwise it breaks       │
+-- │    `:s/pat/rep/` because it is the substitute delimiter)                │
+-- │  - whole_word ON → surround with \< \> (word boundaries)                │
 -- │  - case_sensitive → \C (sensitive) ou \c (insensitive)                  │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function build_pattern(text)
@@ -101,11 +101,11 @@ local function build_pattern(text)
   end
   local body
   if toggles.regex then
-    -- Garde les metachars du user, mais escape `/` pour ne pas casser
-    -- le délimiteur du `:s/pat/rep/` plus tard.
+    -- Keep user metachars, but escape `/` to avoid breaking
+    -- the `:s/pat/rep/` delimiter later.
     body = (text:gsub("/", "\\/"))
   else
-    -- Non-regex : on échappe tous les metachars vim, y compris `/`.
+    -- Non-regex: escape all vim metachars, including `/`.
     body = vim.fn.escape(text, [[\/.*$^~[]])
   end
   if toggles.whole_word then
@@ -116,7 +116,7 @@ local function build_pattern(text)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Crée une fenêtre flottante (Search ou Replace) en haut à droite        │
+-- │  Create a floating window (Search or Replace) at the top right          │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function float(title, row, parent)
   local width = 36
@@ -150,7 +150,7 @@ local function float(title, row, parent)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Adaptation du float aux changements de taille de l'éditeur             │
+-- │  Adapt floats to editor size changes                                    │
 -- └────────────────────────────────────────────────────────────────────────┘
 vim.api.nvim_create_autocmd("VimResized", {
   group = vim.api.nvim_create_augroup("MatchLocalResize", { clear = true }),
@@ -174,7 +174,7 @@ local function close()
     end
   end
   wins = {}
-  -- Restaure le hlsearch de l'utilisateur (search()/replace() l'ont forcé).
+  -- Restore hlsearch (search()/replace() forced it).
   if saved_hlsearch ~= nil then
     vim.o.hlsearch = saved_hlsearch
   end
@@ -196,8 +196,8 @@ local function set_win(winid)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Compteur [N/M] + état des toggles, affichés dans la barre Search      │
--- │  via virt_text aligné à droite                                          │
+-- │  [N/M] counter + toggle state, displayed in the Search bar              │
+-- │  via right-aligned virt_text                                            │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function searchcount(parent, win, buf)
   set_win(parent)
@@ -219,13 +219,13 @@ local function searchcount(parent, win, buf)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Callback à chaque keystroke dans le champ Search                      │
+-- │  Callback on each keystroke in the Search field                         │
 -- │                                                                        │
--- │  Recherche depuis la position d'ouverture (original_pos), pas depuis   │
--- │  la ligne 1 — comportement attendu d'une recherche incrémentale.      │
+-- │  Search from the opening position (original_pos), not from line 1 —    │
+-- │  expected behavior for incremental search.                              │
 -- │                                                                        │
--- │  vim.fn.search retourne 0 si pas de match (pas de throw) ; pas besoin │
--- │  de pcall.                                                            │
+-- │  vim.fn.search returns 0 when there is no match (no throw); no pcall   │
+-- │  needed.                                                              │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function search(text, parent, win, buf)
   rawSearch = text or ""
@@ -241,24 +241,24 @@ local function search(text, parent, win, buf)
   vim.fn.setreg("/", searchText)
 
   set_win(parent)
-  -- Reset à la position d'origine. cursor() clamp les valeurs hors-buffer
-  -- (ex. ligne supprimée après ouverture), donc safe sans check.
+  -- Reset to the original position. cursor() clamps out-of-buffer values
+  -- (e.g. line deleted after opening), so this is safe without a check.
   vim.fn.cursor(original_pos[1], original_pos[2] + 1)
-  -- "Wc" : pas de wrap, accepte le match courant.
+  -- "Wc": no wrap, accepts the current match.
   vim.fn.search(searchText, "Wc")
   searchcount(parent, win, buf)
   set_win(win)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Re-applique le pattern courant après un toggle (sans bouger le curseur)│
+-- │  Reapply the current pattern after a toggle (without moving the cursor) │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function reapply()
   if not wins.search or not vim.api.nvim_win_is_valid(wins.search.win) then
     return
   end
   if rawSearch == "" then
-    -- même si pas de pattern, on rafraîchit l'affichage des toggles
+    -- Even without a pattern, refresh the toggle display.
     searchcount(wins.search.parent, wins.search.win, wins.search.buf)
     return
   end
@@ -275,13 +275,13 @@ end
 -- ┌────────────────────────────────────────────────────────────────────────┐
 -- │  Replace All — :%s/pattern/replace/g                                    │
 -- │                                                                        │
--- │  - Replacement échappé via escape_replacement (regex-aware, gère       │
--- │    aussi les newlines littéraux).                                      │
--- │  - Erreurs vim cmd capturées et affichées (jamais silent!).            │
--- │  - Compte des matches relevé AVANT substitute (searchcount.total).    │
--- │  - Curseur restauré à original_pos après substitute (vim sub déplace  │
--- │    sinon le curseur au dernier match).                                 │
--- │  - UI fermée seulement en cas de succès.                               │
+-- │  - Replacement escaped via escape_replacement (regex-aware, also       │
+-- │    handles literal newlines).                                          │
+-- │  - Vim cmd errors captured and displayed (never silent!).              │
+-- │  - Match count captured BEFORE substitute (searchcount.total).         │
+-- │  - Cursor restored to original_pos after substitute (vim sub otherwise │
+-- │    moves the cursor to the last match).                                │
+-- │  - UI closed only on success.                                          │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function replace(parent, win)
   if searchText == "" then
@@ -302,8 +302,8 @@ local function replace(parent, win)
     return vim.notify("Match : substitute échoué — " .. tostring(err), vim.log.levels.ERROR)
   end
 
-  -- Restaure le curseur à la position d'ouverture (vim sub l'a déplacé au
-  -- dernier match remplacé, ce qui est désorientant pour l'utilisateur).
+  -- Restore the cursor to the opening position (vim sub moved it to the
+  -- last replaced match, which is disorienting).
   vim.fn.cursor(original_pos[1], original_pos[2] + 1)
 
   vim.notify(string.format("Match : %d remplacement(s)", total), vim.log.levels.INFO)
@@ -311,10 +311,10 @@ local function replace(parent, win)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Navigation : prochain (key="n") ou précédent (key="N") match.          │
--- │  Utilise vim.fn.search (API) au lieu de `silent! normal!` :            │
--- │  - Pas de silent! qui mange les erreurs.                                │
--- │  - vim.fn.search retourne 0 si rien trouvé (gérable proprement).       │
+-- │  Navigation: next (key="n") or previous (key="N") match.               │
+-- │  Use vim.fn.search (API) instead of `silent! normal!`:                 │
+-- │  - No silent! swallowing errors.                                        │
+-- │  - vim.fn.search returns 0 when nothing is found (cleanly handled).    │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function jump(key, parent, win, buf)
   if not vim.api.nvim_win_is_valid(parent) or searchText == "" then
@@ -330,14 +330,15 @@ end
 -- ┌────────────────────────────────────────────────────────────────────────┐
 -- │  Replace one + jump                                                     │
 -- │                                                                        │
--- │  Sequence :                                                            │
--- │  1. `searchpos` (sans `n`) → curseur déplacé au début du match.        │
--- │  2. `searchpos(..., "Wcen")` → fin du match SANS bouger curseur (`n`). │
+-- │  Sequence:                                                             │
+-- │  1. `searchpos` (without `n`) → cursor moved to match start.            │
+-- │  2. `searchpos(..., "Wcen")` → match end WITHOUT moving cursor (`n`).  │
 -- │  3. `nvim_buf_set_text(start, end, replaceText.split("\n"))` →         │
--- │     insertion 100% littérale, jamais ré-interprétée par normal-mode.   │
--- │  4. Curseur déplacé APRÈS la zone remplacée, pour éviter que           │
--- │     `search "W"` re-match dans le replacement (cas: "foo" → "foofoo"). │
--- │  5. `vim.fn.search` au prochain match.                                  │
+-- │     100% literal insertion, never reinterpreted by normal mode.        │
+-- │  4. Cursor moved AFTER the replaced zone to prevent                    │
+-- │     `search "W"` re-matching in the replacement (case: "foo" →        │
+-- │     "foofoo").                                                        │
+-- │  5. `vim.fn.search` to the next match.                                  │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function replaceJump(key, parent)
   local sw, sb = wins.search.win, wins.search.buf
@@ -347,7 +348,7 @@ local function replaceJump(key, parent)
   end
   set_win(parent)
 
-  -- 1. Localise le prochain (key="n") ou précédent (key="N") match.
+  -- 1. Locate the next (key="n") or previous (key="N") match.
   local flag = (key == "n") and "W" or "Wb"
   local start_row, start_col = unpack(vim.fn.searchpos(searchText, flag))
   if start_row == 0 then
@@ -355,17 +356,17 @@ local function replaceJump(key, parent)
     return vim.notify("Match : pas d'autre match", vim.log.levels.WARN)
   end
 
-  -- 2. Fin du match SANS bouger le curseur (n = no-move, c = accept match
-  --    courant, e = end position).
+  -- 2. Match end WITHOUT moving the cursor (n = no-move, c = accept current
+  --    match, e = end position).
   local end_row, end_col = unpack(vim.fn.searchpos(searchText, "Wcen"))
   if end_row == 0 then
     set_win(rw)
     return vim.notify("Match : end-of-match introuvable (regex foireuse ?)", vim.log.levels.ERROR)
   end
 
-  -- 3. Remplace l'intervalle [start, end+1) par replaceText, littéralement.
-  --    (start_col / end_col sont 1-indexed côté searchpos ; nvim_buf_set_text
-  --    attend du 0-indexed, end exclusif.)
+  -- 3. Replace the [start, end+1) interval with replaceText, literally.
+  --    (start_col / end_col are 1-indexed from searchpos; nvim_buf_set_text
+  --    expects 0-indexed positions, exclusive end.)
   local replaced_lines = vim.split(replaceText, "\n", { plain = true })
   local ok, err = pcall(
     vim.api.nvim_buf_set_text,
@@ -379,10 +380,10 @@ local function replaceJump(key, parent)
     return vim.notify("Match : erreur replace — " .. tostring(err), vim.log.levels.ERROR)
   end
 
-  -- 4. Position curseur direction-aware pour éviter re-match dans le replacement.
-  --    Forward (n): cursor APRÈS le replacement, search "W" trouve le suivant.
-  --    Backward (N): cursor AU début du replacement, search "Wb" cherche
-  --    strictement avant → saute par-dessus le replacement (plus de re-match).
+  -- 4. Direction-aware cursor position to avoid re-matching inside replacement.
+  --    Forward (n): cursor AFTER the replacement; search "W" finds the next.
+  --    Backward (N): cursor AT replacement start; search "Wb" searches
+  --    strictly before it → skips over the replacement (no re-match).
   local last_line = replaced_lines[#replaced_lines]
   if key == "n" then
     if #replaced_lines == 1 then
@@ -394,14 +395,14 @@ local function replaceJump(key, parent)
     vim.fn.cursor(start_row, start_col)
   end
 
-  -- 5. Jump dans le sens demandé (W ou Wb selon key).
+  -- 5. Jump in the requested direction (W or Wb depending on key).
   vim.fn.search(searchText, flag)
   searchcount(parent, sw, sb)
   set_win(rw)
 
-  -- Bug 2 fix: si on faisait des undos avant ce nouveau replace, l'undo tree
-  -- est branché → les redos passés sont enterrés. Resync compteurs pour pas
-  -- que <C-u> remonte au-delà de la session Match dans le travail antérieur.
+  -- Bug 2 fix: if undos happened before this new replace, the undo tree has
+  -- branched → previous redos are buried. Resync counters so <C-u> cannot go
+  -- above the Match session into earlier work.
   if historyCount > 0 then
     replaceCount = replaceCount - historyCount + 1
     historyCount = 0
@@ -411,16 +412,15 @@ local function replaceJump(key, parent)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Undo / Redo dans la fenêtre source.                                    │
+-- │  Undo / Redo in the source window.                                      │
 -- │                                                                        │
--- │  - Utilise `vim.cmd.undo()` / `vim.cmd.redo()` (commands ex propres,    │
--- │    pas `silent! normal!` qui masque toute erreur).                     │
--- │  - Borne historyCount entre 0 et replaceCount pour pas remonter        │
--- │    AU-DESSUS de notre session Match (= dans le travail de l'utilisateur│
--- │    avant ouverture de Match).                                          │
--- │  - Notifie l'utilisateur si vim.cmd échoue.                             │
+-- │  - Use `vim.cmd.undo()` / `vim.cmd.redo()` (proper ex commands,        │
+-- │    not `silent! normal!`, which hides errors).                         │
+-- │  - Clamp historyCount between 0 and replaceCount to avoid going        │
+-- │    ABOVE the Match session (= work before Match opened).               │
+-- │  - Notify if vim.cmd fails.                                            │
 -- │                                                                        │
--- │  `action` est "undo" ou "redo".                                         │
+-- │  `action` is "undo" or "redo".                                        │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function history(action, parent, win)
   local nextCount = action == "undo" and historyCount + 1 or historyCount - 1
@@ -446,7 +446,7 @@ local function history(action, parent, win)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Force le mode insert quand on bascule sur un buffer du float           │
+-- │  Force insert mode when switching to a float buffer                     │
 -- └────────────────────────────────────────────────────────────────────────┘
 vim.api.nvim_create_autocmd("WinEnter", {
   group = vim.api.nvim_create_augroup("MatchLocalEnter", { clear = true }),
@@ -476,17 +476,17 @@ local function onChange(parent, win, buf, callback)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Point d'entrée : ouvre les 2 floats et installe les keymaps            │
+-- │  Entry point: open both floats and install keymaps                      │
 -- └────────────────────────────────────────────────────────────────────────┘
 local function open(args)
   args = args or ""
   local parent = vim.api.nvim_get_current_win()
 
-  -- Mémorise la position du curseur avant qu'on bouge dans les floats —
-  -- la search incrémentale repartira d'ici (pas de la ligne 1).
+  -- Remember the cursor position before moving into floats —
+  -- incremental search restarts here (not from line 1).
   local cur = vim.api.nvim_win_get_cursor(parent)
   original_pos = { cur[1], cur[2] }
-  saved_hlsearch = vim.o.hlsearch  -- snapshot pour restauration à close()
+  saved_hlsearch = vim.o.hlsearch  -- snapshot for restoration at close()
 
   toggles.case_sensitive = false
   toggles.whole_word = false
@@ -554,9 +554,9 @@ local function open(args)
 end
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
--- │  Spec lazy.nvim : plugin virtual (rien à télécharger)                   │
--- │  <leader>sm reste à Snacks marks (picker des vim marks).                │
--- │  Match est sur <leader>r / <leader>R (= Replace, mnémonique).           │
+-- │  lazy.nvim spec: virtual plugin (nothing to download)                   │
+-- │  <leader>sm remains Snacks marks (vim marks picker).                    │
+-- │  Match is on <leader>r / <leader>R (= Replace mnemonic).                │
 -- └────────────────────────────────────────────────────────────────────────┘
 return {
   {

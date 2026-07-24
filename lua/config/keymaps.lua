@@ -58,7 +58,7 @@ map("n", "N", "Nzzzv", { desc = "Previous search centered" })
 
 map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
--- <C-/> + <C-_> : certains terminaux émettent <C-_> pour Ctrl+/, on couvre les deux.
+-- <C-/> + <C-_>: some terminals emit <C-_> for Ctrl+/; cover both.
 local function float_term()
   Snacks.terminal(nil, {
     cwd = LazyVim.root(),
@@ -73,5 +73,5 @@ end
 map({ "n", "t" }, "<C-/>", float_term, { desc = "Terminal Float (Root Dir)" })
 map({ "n", "t" }, "<C-_>", float_term, { desc = "Terminal Float (Root Dir)" })
 
--- F3-F8 : libres. Les anciens raccourcis make/compile/run ont été retirés
--- (à lancer via le terminal flottant `<C-/>`).
+-- F3-F8: free. Old make/compile/run mappings were removed
+-- (launch through the floating terminal `<C-/>`).

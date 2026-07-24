@@ -1,8 +1,8 @@
 -- ╔══════════════════════════════════════════════════════════════════════════╗
 -- ║                        Debugger C/C++ (codelldb)                         ║
--- ║  Core DAP (UI + virtual text + keymaps) vient de l'extra LazyVim:        ║
+-- ║  Core DAP (UI + virtual text + keymaps) comes from the LazyVim extra:    ║
 -- ║    lazyvim.plugins.extras.dap.core                                       ║
--- ║  Ce fichier ajoute juste l'adapter et la config de lancement C/C++.      ║
+-- ║  This file only adds the C/C++ adapter and launch configuration.         ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 
 return {
@@ -58,8 +58,8 @@ return {
     end,
   },
 
-  -- DAP UI: bordures arrondies cohérentes + barre d'icônes désactivée
-  -- (on utilise les keymaps <Space>d... + F9, plus besoin des icônes).
+  -- DAP UI: consistent rounded borders + disabled icon bar
+  -- (<Space>d... + F9 keymaps make icons unnecessary).
   {
     "rcarriga/nvim-dap-ui",
     opts = {

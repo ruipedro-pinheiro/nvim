@@ -1,18 +1,18 @@
 -- ╔══════════════════════════════════════════════════════════════════════════╗
--- ║                  Norminette 42 — via nvim-lint (sortie JSON)                ║
+-- ║                  Norminette 42 — via nvim-lint (JSON output)                ║
 -- ║                                                                            ║
--- ║  Remplace hardyrafael17/norminette42.nvim, qui était cassé :                ║
--- ║   - colonnes parsées par offsets de caractères FIXES → fausses dès que la    ║
--- ║     sortie norminette est colorée (3.3.59) → diagnostic à côté (ex: posé     ║
--- ║     sur NULL au lieu du `+`) ;                                               ║
--- ║   - codes ANSI (^[[94m…) laissés dans le message ;                          ║
--- ║   - norminette lancé sur le fichier DISQUE, pas le buffer.                   ║
+-- ║  Replaces hardyrafael17/norminette42.nvim, which was broken:                ║
+-- ║   - columns parsed with FIXED character offsets → wrong as soon as           ║
+-- ║     norminette output is colored (3.3.59) → misplaced diagnostic (ex: on     ║
+-- ║     NULL instead of `+`);                                                    ║
+-- ║   - ANSI codes (^[[94m…) left in the message;                               ║
+-- ║   - norminette run on the DISK file, not the buffer.                         ║
 -- ║                                                                            ║
--- ║  Ici : `norminette --no-colors -f json` → JSON structuré (lineno/column      ║
--- ║  exacts, zéro ANSI), parsé proprement. Lint à l'ouverture / au save / en     ║
--- ║  sortie d'insert sur les .c/.h.                                              ║
+-- ║  Here: `norminette --no-colors -f json` → structured JSON (exact            ║
+-- ║  lineno/column, zero ANSI), parsed cleanly. Lint on open / save / insert     ║
+-- ║  exit for .c/.h.                                                            ║
 -- ║                                                                            ║
--- ║  (l'ancien plugin reste installé mais n'est plus chargé → `:Lazy clean`.)    ║
+-- ║  (the old plugin remains installed but no longer loads → `:Lazy clean`.)     ║
 -- ╚══════════════════════════════════════════════════════════════════════════╝
 
 return {
@@ -27,11 +27,11 @@ return {
         stdin = false,
         args = { "--no-colors", "-f", "json" },
         stream = "stdout",
-        ignore_exitcode = true, -- norminette sort en code != 0 dès qu'il y a une erreur
+        ignore_exitcode = true, -- norminette exits nonzero as soon as there is an error
         parser = function(output)
           local diags = {}
-          -- norminette préfixe sa sortie d'un "Setting locale to en_US" → on isole
-          -- l'objet JSON ({...}) avant de décoder, sinon vim.json.decode plante.
+          -- norminette prefixes output with "Setting locale to en_US" → isolate
+          -- the JSON object ({...}) before decoding, otherwise vim.json.decode fails.
           local json = output:match("%b{}")
           if not json then
             return diags
@@ -45,8 +45,8 @@ return {
               local sev = err.level == "Error" and vim.diagnostic.severity.ERROR
                 or vim.diagnostic.severity.WARN
               for _, h in ipairs(err.highlights or {}) do
-                -- vim.json.decode rend les `null` JSON comme vim.NIL (truthy) → on
-                -- valide le type `number`, sinon `col + vim.NIL` lève une erreur.
+                -- vim.json.decode returns JSON `null` as vim.NIL (truthy) → validate
+                -- the `number` type, otherwise `col + vim.NIL` raises an error.
                 local lnum = type(h.lineno) == "number" and h.lineno or 1
                 local hcol = type(h.column) == "number" and h.column or 1
                 local col = math.max(hcol - 1, 0)
@@ -74,9 +74,9 @@ return {
         end,
       })
 
-      -- nvim-lint est chargé sur ft=c/cpp : l'autocmd BufReadPost rate le 1er
-      -- buffer (celui qui a déclenché le load), on le lint donc tout de suite.
-      -- Inconditionnel pour couvrir aussi les .h (filetype cpp sur ce nvim).
+      -- nvim-lint loads on ft=c/cpp: the BufReadPost autocmd misses the first
+      -- buffer (the one that triggered loading), so lint it immediately.
+      -- Unconditional to also cover .h files (filetype cpp on this nvim).
       require("lint").try_lint("norminette")
     end,
   },
