@@ -48,10 +48,8 @@ Config Neovim basée sur [LazyVim](https://www.lazyvim.org/) pour C/C++ (norme 4
 ### Prérequis
 
 ```bash
-# Neovim 0.11+ (testé en nightly 0.13)
-sudo dnf install neovim   # Fedora
-brew install neovim       # macOS
-sudo pacman -S neovim     # Arch
+# Neovim nightly est fourni par install.sh dans ~/.local/opt/nvim
+# Le wrapper court est créé dans ~/.local/bin/nvim
 
 # Pour le debug C/C++ (UBSan) :
 sudo dnf install libubsan
@@ -67,7 +65,12 @@ mv ~/.config/nvim ~/.config/nvim.backup 2>/dev/null
 
 git clone https://github.com/ruipedro-pinheiro/nvim.git ~/.config/nvim
 ~/.config/nvim/install.sh   # pose nvim + ripgrep + tree-sitter (sans root) + bootstrap
+~/.config/nvim/check-nvim-nightly.sh   # vérifie wrapper/runtime/API nightly
 ```
+
+`install.sh` repart de zéro : il supprime les anciennes installations locales,
+la toolchain, `~/.local/share/nvim`, `~/.local/state/nvim` et `~/.cache/nvim`
+avant de réinstaller la dernière nightly et tous les plugins.
 
 ### Setup perso
 

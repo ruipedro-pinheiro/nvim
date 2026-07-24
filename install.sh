@@ -7,22 +7,22 @@
 #
 #   git clone https://github.com/ruipedro-pinheiro/nvim.git ~/.config/nvim
 #   ~/.config/nvim/install.sh
-#   NVIM_TAG=v0.11.4 ./install.sh | WITH_FONT=0 ./install.sh | RESET_MASON=1 ./install.sh
+#   WITH_FONT=0 ./install.sh
 set -u
 
-NVIM_TAG="${NVIM_TAG:-nightly}"
-BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"      # contient SEULEMENT le wrapper nvim (exposé au shell)
+NVIM_TAG="nightly"
+SCRIPT_DIR=$(CDPATH= cd "$(dirname "$0")" && pwd)
+BIN_DIR="$HOME/.local/bin"                  # contient SEULEMENT le wrapper nvim (exposé au shell)
 OPT_DIR="$HOME/.local/opt"
 TC="$OPT_DIR/nvim-toolchain"                # racine toolchain isolée
 TOOL="$TC/bin"                             # binaires toolchain — HORS PATH global
 REPO="https://github.com/ruipedro-pinheiro/nvim.git"
 ARCH="linux-x86_64"
-WITH_FONT="${WITH_FONT:-1}"; RESET_MASON="${RESET_MASON:-0}"
+WITH_FONT="${WITH_FONT:-1}"
 RG_VER="15.1.0"; FD_VER="10.4.2"; TS_VER="0.25.10"; NODE_VER="v24.18.0"
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-mkdir -p "$BIN_DIR" "$OPT_DIR" "$TOOL"
-export PATH="$TOOL:$PATH"   # LOCAL à ce script (le bootstrap doit voir la toolchain) — JAMAIS écrit dans tes rc
+mkdir -p "$BIN_DIR" "$OPT_DIR"
 
 log()  { printf '\033[1;32m::\033[0m %s\n' "$1"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$1"; }
@@ -32,6 +32,18 @@ runs() { command -v "$1" >/dev/null 2>&1 && "$1" --version >/dev/null 2>&1; }
 node_ok() { runs node || return 1; m=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0); [ "$m" -ge 18 ] 2>/dev/null && runs npm; }
 ts_ok()   { runs tree-sitter || return 1; case "$(tree-sitter --version 2>/dev/null | awk '{print $2}')" in 0.25.*) return 0;; *) return 1;; esac; }
 
+cleanup_old_install() {
+  log "Nettoyage des anciennes installations nvim"
+  rm -rf "$OPT_DIR/nvim" "$TC" \
+    "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim"
+  for old in "$OPT_DIR/nvim-nightly" "$OPT_DIR"/nvim-nightly.bak-*; do
+    [ ! -e "$old" ] || rm -rf "$old"
+  done
+  rm -f "$BIN_DIR/nvim" "$BIN_DIR/nvim-nightly"
+  mkdir -p "$TOOL"
+  export PATH="$TOOL:$PATH"
+}
+
 # ── 0. Prérequis système (non posables sans root : on vérifie + on alerte) ────
 miss=""; for c in git curl tar gzip; do have "$c" || miss="$miss $c"; done
 have cc || have gcc || miss="$miss cc/gcc"; have python3 || miss="$miss python3"
@@ -40,10 +52,12 @@ have cc || have gcc || miss="$miss cc/gcc"; have python3 || miss="$miss python3"
 # ── 1. Neovim (OPT_DIR) + wrapper qui expose la toolchain À NVIM SEULEMENT ────
 log "Neovim ($NVIM_TAG)"
 if dl "https://github.com/neovim/neovim/releases/download/$NVIM_TAG/nvim-$ARCH.tar.gz" "$TMP/nvim.tgz" && tar -xzf "$TMP/nvim.tgz" -C "$TMP" 2>/dev/null; then
-  rm -rf "$OPT_DIR/nvim"; mv "$TMP/nvim-$ARCH" "$OPT_DIR/nvim"
-  printf '#!/usr/bin/env sh\nexport PATH="%s:$PATH"\nexec "%s/nvim/bin/nvim" "$@"\n' "$TOOL" "$OPT_DIR" > "$BIN_DIR/nvim"
+  cleanup_old_install
+  mv "$TMP/nvim-$ARCH" "$OPT_DIR/nvim"
+  printf '#!/usr/bin/env sh\nunset VIMRUNTIME\nexport VIMRUNTIME="%s/nvim/share/nvim/runtime"\nexport PATH="%s:$PATH"\nexec "%s/nvim/bin/nvim" "$@"\n' "$OPT_DIR" "$TOOL" "$OPT_DIR" > "$BIN_DIR/nvim"
   chmod +x "$BIN_DIR/nvim"
-  "$BIN_DIR/nvim" --version >/dev/null 2>&1 || warn "nvim posé mais ne démarre pas (glibc ? essaie NVIM_TAG=v0.11.4)"
+  "$BIN_DIR/nvim" --version >/dev/null 2>&1 || warn "nvim posé mais ne démarre pas (glibc ?)"
+  "$SCRIPT_DIR/check-nvim-nightly.sh" || exit 1
 else warn "Téléchargement Neovim KO (tag $NVIM_TAG / réseau) — STOP"; exit 1; fi
 
 # ── 2. node (uniquement si système absent/cassé/<18 ; posé dans la TOOLCHAIN) ─
@@ -99,21 +113,18 @@ case ":$PATH:" in
      done; warn "$BIN_DIR ajouté à tes rc (pour trouver 'nvim') — la toolchain reste isolée" ;;
 esac
 
-# ── 10. Mason/lazy hérités d'une autre machine/glibc ─────────────────────────
-[ "$RESET_MASON" = "1" ] && { warn "RESET_MASON : purge mason+lazy"; rm -rf "$HOME/.local/share/nvim/mason" "$HOME/.local/share/nvim/lazy"; }
-
-# ── 11. Config nvim (absente / la tienne / étrangère->backup) ────────────────
+# ── 10. Config nvim (absente / la tienne / étrangère->backup) ────────────────
 CFG="$HOME/.config/nvim"
 if [ ! -e "$CFG" ]; then log "Clone config"; git clone "$REPO" "$CFG" || warn "clone KO"
 elif [ -d "$CFG/.git" ] && [ "$(git -C "$CFG" remote get-url origin 2>/dev/null)" = "$REPO" ]; then
   log "Config déjà la tienne -> pull"; git -C "$CFG" pull --ff-only 2>/dev/null || warn "pull KO (modifs locales ?)"
 else BK="$CFG.bak.$(date +%Y%m%d-%H%M%S)"; warn "Config étrangère -> backup $BK"; mv "$CFG" "$BK"; git clone "$REPO" "$CFG" || warn "clone KO"; fi
 
-# ── 12. Bootstrap (nvim, via son wrapper, voit la toolchain) ─────────────────
+# ── 11. Bootstrap (nvim, via son wrapper, voit la toolchain) ─────────────────
 log "Bootstrap (Lazy sync + Mason) — quelques minutes"
 "$BIN_DIR/nvim" --headless "+Lazy! sync" +qa >"$TMP/lazy.log" 2>&1 || warn "bootstrap : $(tail -2 "$TMP/lazy.log" | tr '\n' ' ')"
 
-# ── 13. Preuve d'isolation : SHELL vs NVIM ───────────────────────────────────
+# ── 12. Preuve d'isolation : SHELL vs NVIM ───────────────────────────────────
 hash -r 2>/dev/null || true
 log "Isolation — ce que voit ton SHELL (doit rester ton système, pas ma toolchain) :"
 PSHELL=$(printf '%s' "$PATH" | sed "s#$TOOL:##")   # PATH SANS la toolchain = vue de ton shell
