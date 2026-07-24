@@ -120,6 +120,24 @@ autocmd({ "BufWinEnter", "FileType" }, {
 })
 
 -- ┌────────────────────────────────────────────────────────────────────────┐
+-- │  Kitty padding: thin (3px) while nvim runs, back to default on exit    │
+-- │                                                                        │
+-- │  Needs allow_remote_control socket-only + listen_on in kitty.conf.     │
+-- │  This file loads at VeryLazy (after VimEnter), so apply directly.      │
+-- └────────────────────────────────────────────────────────────────────────┘
+if vim.env.KITTY_LISTEN_ON then
+  vim.fn.system({ "kitty", "@", "set-spacing", "padding=3" })
+
+  augroup("KittyPadding", { clear = true })
+  autocmd("VimLeavePre", {
+    group = "KittyPadding",
+    callback = function()
+      vim.fn.system({ "kitty", "@", "set-spacing", "padding=default" })
+    end,
+  })
+end
+
+-- ┌────────────────────────────────────────────────────────────────────────┐
 -- │                      Diagnostic float on cursor hold                   │
 -- └────────────────────────────────────────────────────────────────────────┘
 augroup("DiagnosticFloat", { clear = true })
