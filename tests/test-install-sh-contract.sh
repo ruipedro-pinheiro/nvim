@@ -32,14 +32,22 @@ grep -qF '"$HOME/.config"/nvim.bak.*' "$INSTALL" || fail "glob des backups nvim 
 grep -qF '[ -z "$keep" ] || rm -rf "$keep"' "$INSTALL" || fail "anciens backups nvim non supprimés"
 grep -qF 'keep="$backup"' "$INSTALL" || fail "backup nvim le plus récent non conservé"
 grep -qF 'MIN_FREE_MB="2048"' "$INSTALL" || fail "réserve disque de 2 Gio absente"
+grep -qF 'TS_VER="0.25.3"' "$INSTALL" || fail "tree-sitter doit rester compatible avec glibc 2.35"
+grep -qF '"$TOOL/tree-sitter" --version' "$INSTALL" || fail "tree-sitter téléchargé non testé avant bootstrap"
+grep -qF 'verify_toolchain' "$INSTALL" || fail "préflight global de la toolchain absent"
+for tool in node npm rg fd tree-sitter; do
+  grep -qF "verify_tool $tool" "$INSTALL" || fail "validation manquante pour $tool"
+done
 grep -qF 'require_free_space' "$INSTALL" || fail "préflight espace disque absent"
 grep -qF 'for path in "$HOME" "$TMP"' "$INSTALL" || fail "espace temporaire non vérifié"
 
 check_line=$(grep -nF 'check-nvim-nightly.sh' "$INSTALL" | sed -n '1s/:.*//p')
 lazy_line=$(grep -nF '+Lazy! sync' "$INSTALL" | sed -n '1s/:.*//p')
 prune_line=$(grep -nF 'prune_config_backups' "$INSTALL" | sed -n '2s/:.*//p')
+verify_line=$(grep -nF 'verify_toolchain || exit 1' "$INSTALL" | sed -n '1s/:.*//p')
 [ -n "$check_line" ] && [ -n "$lazy_line" ] || fail "lignes check/Lazy introuvables"
 [ "$check_line" -lt "$lazy_line" ] || fail "vérification après Lazy sync"
 [ -n "$prune_line" ] && [ "$prune_line" -lt "$lazy_line" ] || fail "backups nvim non purgés avant bootstrap"
+[ -n "$verify_line" ] && [ "$verify_line" -lt "$lazy_line" ] || fail "toolchain non validée avant bootstrap"
 
 printf 'ok - contrat install.sh\n'

@@ -21,7 +21,7 @@ REPO_SSH="git@github.com:ruipedro-pinheiro/nvim.git"
 ARCH="linux-x86_64"
 WITH_FONT="${WITH_FONT:-1}"
 MIN_FREE_MB="2048"
-RG_VER="15.1.0"; FD_VER="10.4.2"; TS_VER="0.25.10"; NODE_VER="v24.18.0"
+RG_VER="15.1.0"; FD_VER="10.4.2"; TS_VER="0.25.3"; NODE_VER="v24.18.0"
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$BIN_DIR" "$OPT_DIR"
@@ -33,6 +33,29 @@ have() { p=$(command -v "$1" 2>/dev/null) || return 1; case "$p" in /*) [ -x "$p
 runs() { command -v "$1" >/dev/null 2>&1 && "$1" --version >/dev/null 2>&1; }
 node_ok() { runs node || return 1; m=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0); [ "$m" -ge 18 ] 2>/dev/null && runs npm; }
 ts_ok()   { runs tree-sitter || return 1; case "$(tree-sitter --version 2>/dev/null | awk '{print $2}')" in 0.25.*) return 0;; *) return 1;; esac; }
+
+verify_tool() {
+  name=$1
+  shift
+  if command -v "$name" >/dev/null 2>&1 && "$name" "$@" >/dev/null 2>&1; then
+    log "Validation $name OK"
+    return 0
+  fi
+  warn "$name absent ou incompatible avec ce système"
+  return 1
+}
+
+verify_toolchain() {
+  failed=0
+  verify_tool node --version || failed=1
+  verify_tool npm --version || failed=1
+  verify_tool rg --version || failed=1
+  verify_tool fd --version || failed=1
+  verify_tool tree-sitter --version || failed=1
+  verify_tool cc --version || verify_tool gcc --version || failed=1
+  command -v unzip >/dev/null 2>&1 || { warn "unzip absent"; failed=1; }
+  [ "$failed" -eq 0 ]
+}
 
 require_free_space() {
   required_kb=$((MIN_FREE_MB * 1024))
@@ -115,8 +138,14 @@ if ! have unzip; then
   else warn "ni unzip ni python3 : codelldb/js-debug ne s'extrairont pas"; fi
 fi
 if ! ts_ok; then log "tree-sitter CLI $TS_VER (isolé)"
-  dl "https://github.com/tree-sitter/tree-sitter/releases/download/v$TS_VER/tree-sitter-linux-x64.gz" "$TMP/ts.gz" \
-    && gunzip -f "$TMP/ts.gz" && cp "$TMP/ts" "$TOOL/tree-sitter" && chmod +x "$TOOL/tree-sitter" || warn "tree-sitter KO"; fi
+  if dl "https://github.com/tree-sitter/tree-sitter/releases/download/v$TS_VER/tree-sitter-linux-x64.gz" "$TMP/ts.gz" \
+    && gunzip -f "$TMP/ts.gz" && cp "$TMP/ts" "$TOOL/tree-sitter" && chmod +x "$TOOL/tree-sitter"; then
+    if ! "$TOOL/tree-sitter" --version >/dev/null 2>&1; then
+      rm -f "$TOOL/tree-sitter"
+      warn "tree-sitter téléchargé mais incompatible avec cette glibc"
+    fi
+  else warn "tree-sitter KO"; fi
+fi
 
 # ── 7. norminette (dedicated venv in toolchain; pip --user fallback) ──────────
 if ! runs norminette; then
@@ -157,6 +186,8 @@ elif is_own_config; then
   fi
 else BK="$CFG.bak.$(date +%Y%m%d-%H%M%S)"; warn "Config étrangère -> backup $BK"; mv "$CFG" "$BK"; git clone "$REPO" "$CFG" || warn "clone KO"; fi
 prune_config_backups
+
+verify_toolchain || exit 1
 
 # ── 11. Bootstrap (nvim, through its wrapper, sees the toolchain) ──────────────
 log "Bootstrap (Lazy sync + Mason) — quelques minutes"
